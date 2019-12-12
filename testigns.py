@@ -1,22 +1,15 @@
-#Midpoint rule
+import vegas
+import math
+
 def f(x):
-    
-    return -x**2 + 1
+    dx2 = 0
+    for d in range(4):
+        dx2 += (x[d] - 0.5) ** 2
+    return math.exp(-dx2 * 100.) * 1013.2118364296088
 
+integ = vegas.Integrator([[-1, 1], [0, 1], [0, 1], [0, 1]])
 
-
-class Midpoint:
-    def __init__(self, f, xmin, xmax):
-        self.f = f
-        self.xmin = xmin
-        self.xmax = xmax
-    def midpoint(self):
-        a = self.xmin 
-        b = self.xmax
-        R = b-a
-        return R*self.f((b+a)/2)
-    
-
-
-
-intme = Midpoint(f, -1, 1)
+result = integ(f, nitn=10, neval=1000)
+print(result.summary())
+print('result = %s    Q = %.2f' % (result, result.Q))
+integ.map.show_grid(30)

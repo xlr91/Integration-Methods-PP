@@ -1,5 +1,4 @@
-def f(x):
-    
+def f1(x):
     return x**4
 
 
@@ -133,7 +132,7 @@ class Integrator:
 
 
 
-intme = Integrator(f, 0, 10)
+intme = Integrator(f1, 0, 10)
 ltest1 = intme.w(10, 1)
 ltest2 = intme.w(10, 2)
 
