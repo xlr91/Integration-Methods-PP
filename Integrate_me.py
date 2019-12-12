@@ -1,7 +1,8 @@
 def f1(x):
     return x**4
 
-
+## check what the uncertainty is as a function of sampled points n
+# demonstrate convergence, perform timing tests
 
 class Integrator:
     def __init__(self, f, xmin, xmax):
@@ -9,15 +10,62 @@ class Integrator:
         self.xmin = xmin
         self.xmax = xmax
     
-
     def __repr__(self):
         newtuple = tuple([self.f, self.xmax, self.xmin])
         classname = self.__class__.__name__
         return '{}{}'.format(classname, newtuple)
 
+    def retanalysis(self, Nmax = 500, Ndiffs = 10):
+        import time
+        
+        nPoints = [2]
+        start_time = time.time()
+        intvalue = [self.cmidpoint(2)]
+        time_taken = [time.time()-start_time]
 
-    
-    
+        for i in range(int(Nmax/Ndiffs)):
+            npoint = (i+1)*Ndiffs
+            
+            start_time = time.time()
+            tintvalue = self.cmidpoint(npoint)
+            timepast = time.time() - start_time
+
+            nPoints.append(npoint)
+            intvalue.append(tintvalue)
+            time_taken.append(timepast)
+
+        return [nPoints, intvalue, time_taken]
+
+    def plotme(self, intmethod = None, Nmax = 500, Ndiffs = 10, realvalue = None):
+        #MAKE THIS THE UNCERTAINTY TOO
+        import matplotlib.pyplot as plt 
+        
+        RetAn = self.retanalysis(Nmax, Ndiffs)
+
+        plt.figure(0)
+        plt.title('Plotting the value of the integral as a function of points')
+        #plt.xlim(0, xlim)
+        #plt.ylim(0, 100)
+        #plt.hlines(10, 0, self.z[len(self.z)-1])
+        plt.plot(RetAn[0], RetAn[1])
+        
+        #plt.xlabel('Redshift (z)')
+        #plt.ylabel('Percentage Difference ')
+        plt.show()
+
+        if realvalue != None:
+            plt.figure(1)
+            plt.title('difference from actual value as a function of points')
+            RVlst = [(realvalue - i)*100 / realvalue for i in RetAn[1]]
+            plt.plot(RetAn[0], RVlst)
+            plt.show()
+            
+        plt.figure(2)
+        plt.title('timingtest')
+        plt.plot(RetAn[0], RetAn[2])
+        plt.show()
+        #return nPoints
+
 
     def midpoint(self):
         a = self.xmin 
@@ -32,11 +80,16 @@ class Integrator:
         h = (b-a)/N
         x = [a + i*h for i in range(N+1)]
         value =  0
+        xin = []
         for i in range(N):
             xa = x[i]
             xb = x[i+1]
             value += (xb - xa) * f((xb+xa)/2)
+            xin.append((xb+xa)/2)
+        
+        #return value
         return value
+
 
     def trapz(self):
         a = self.xmin 
@@ -54,7 +107,7 @@ class Integrator:
         value = 0
         value += h*f(x[0])/2
 
-        for i in range(1, N-1):
+        for i in range(1, N):
             #print(i)
             value += f(x[i]) * h
         value += h*f(x[N])/2
@@ -88,14 +141,24 @@ class Integrator:
             value += R * thelist[i] * f(x[i])
         return value
 
-
     def Integrate(self, N, kind):
+        #does it well for simpsons and trapz
+        #works for cmidpoint, more testing is required
         value = 0
         a = self.xmin
         b = self.xmax
         h = (b-a) / N
         wlist = self.w(N, kind, h)
         x = [a + i*h for i in range(N+1)]
+
+        if kind == 0: #deals with the cmidpoint rule
+            xnew = []
+            for i in range(N):
+                xa = x[i]
+                xb = x[i+1]
+                xnew.append((xb+xa)/2)
+            x = xnew
+            N -= 1
         #wlist = self.w(N, kind, h)
         for i in range(N+1):
             #print(i)
@@ -103,13 +166,13 @@ class Integrator:
             #print('coord', xi)
             value += wlist[i] * self.f(x[i])
             #print(value)
+        #return value
         return value
 
-
     def w(self, N, kind, h=1):
-        'returns w list of values'
+        
         if kind == 0:
-            wlist = [2 for i in range(N)]
+            wlist = [h for i in range(N)]
 
         elif kind == 1:
             wlist = [h for i in range(N)]
@@ -137,3 +200,5 @@ ltest1 = intme.w(10, 1)
 ltest2 = intme.w(10, 2)
 
 
+
+#intme.plotme(Nmax = 500, realvalue = 1000/3)
