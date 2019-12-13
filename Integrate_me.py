@@ -4,25 +4,19 @@
 # demonstrate convergence, perform timing tests
 
 class Integrator:
-    def __init__(self, f, xmin, xmax):
+    def __init__(self, f):
         self.f = f
-        self.xmin = xmin
-        self.xmax = xmax
     
     def __repr__(self):
-        newtuple = tuple([self.f, self.xmax, self.xmin])
+        newtuple = tuple([self.f])
         classname = self.__class__.__name__
         return '{}{}'.format(classname, newtuple)
 
-    def midpoint(self):
-        a = self.xmin 
-        b = self.xmax
+    def midpoint(self, a, b):
         R = b-a
         return R*self.f((b+a)/2)
 
-    def cmidpoint(self, N):
-        a = self.xmin 
-        b = self.xmax
+    def cmidpoint(self, a, b, N):
         f = self.f
         h = (b-a)/N
         x = [a + i*h for i in range(N+1)]
@@ -37,16 +31,12 @@ class Integrator:
         #return value
         return value
 
-    def trapz(self):
-        a = self.xmin 
-        b = self.xmax
+    def trapz(self, a, b):
         f = self.f
         R = (b-a)/2
         return R*(f(a) + f(b))
 
-    def ctrapz(self, N):
-        a = self.xmin 
-        b = self.xmax
+    def ctrapz(self, a, b, N):
         f = self.f
         h = (b-a)/N
         x = [a + i*h for i in range(N+1)]
@@ -59,16 +49,12 @@ class Integrator:
         value += h*f(x[N])/2
         return value
 
-    def simpsons(self):
-        a = self.xmin 
-        b = self.xmax
+    def simpsons(self, a, b):
         f = self.f
         R = (b-a)/6
         return R * (f(a) + f(b) + 4*f((a+b)/2))
     
-    def csimpsons(self, N):
-        a = self.xmin 
-        b = self.xmax
+    def csimpsons(self, a, b, N):
         f = self.f
         h = (b-a)/N
         R = h/3
@@ -87,20 +73,19 @@ class Integrator:
             value += R * thelist[i] * f(x[i])
         return value
 
-
-    def retanalysis(self, Nmax, Ndiffs, intmethod):
+    def retanalysis(self, a, b, Nmax, Ndiffs, intmethod):
         import time
         
         nPoints = [2]
         start_time = time.time()
-        intvalue = [self.NCInt(nPoints[0], intmethod)]
+        intvalue = [self.NCInt(a, b, nPoints[0], intmethod)]
         time_taken = [time.time()-start_time]
 
         for i in range(int(Nmax/Ndiffs)):
             npoint = (i+1)*Ndiffs
             
             start_time = time.time()
-            tintvalue = self.NCInt(npoint, intmethod)
+            tintvalue = self.NCInt(a, b, npoint, intmethod)
             timepast = time.time() - start_time
 
             nPoints.append(npoint)
@@ -109,11 +94,11 @@ class Integrator:
 
         return [nPoints, intvalue, time_taken]
 
-    def plotme(self, intmethod, Nmax = 500, Ndiffs = 10, realvalue = None):
+    def plotme(self, a, b, intmethod, Nmax = 500, Ndiffs = 10, realvalue = None):
         
         import matplotlib.pyplot as plt 
         
-        RetAn = self.retanalysis(Nmax, Ndiffs, intmethod)
+        RetAn = self.retanalysis(a, b, Nmax, Ndiffs, intmethod)
 
         plt.figure(0)
         plt.title('Value of Integral as a function of sample points')
@@ -139,12 +124,12 @@ class Integrator:
         plt.show()
         #return nPoints
 
-    def plotmeval(self, intmethod, Nmax = 500, Ndiffs = 10, realvalue = None):
+    def plotmeval(self, a, b, intmethod, Nmax = 500, Ndiffs = 10, realvalue = None):
         import matplotlib.pyplot as plt
         import numpy as np
         import matplotlib.gridspec as gridspec
 
-        RetAn = self.retanalysis(Nmax, Ndiffs, intmethod)
+        RetAn = self.retanalysis(a, b, Nmax, Ndiffs, intmethod)
 
         fig = plt.figure(tight_layout=True)
         #fig.suptitle('sup bruh ')
@@ -179,14 +164,12 @@ class Integrator:
 
         plt.show()
 
-    def NCInt(self, N, kind):
+    def NCInt(self, a, b, N, kind):
         #does it well for simpsons and trapz
         #works for cmidpoint, more testing is required
         #THis is newton-cotes integration, basically its all of the 
         #three basic integrations all in one method (!!!)
         value = 0
-        a = self.xmin
-        b = self.xmax
         h = (b-a) / N
         wlist = self.w(N, kind, h)
         x = [a + i*h for i in range(N+1)]
@@ -237,7 +220,7 @@ class Integrator:
         if intmeth == 2:
             N = 2
 
-        val = self.NCInt(N, intmeth) #this needs to be fixed because it needs to take range
+        val = self.NCInt(a, b, N, intmeth) #this needs to be fixed because it needs to take range
         err = abs(val - Q0)
         if err >= tau:
             m = (a+b)/2
@@ -275,11 +258,11 @@ def f5(x):
 def functiontester(xmin, xmax, VAL):
     flist = [f1, f2, f3, f4, f5]
     for func in flist:
-        intme = Integrator(func, xmin, xmax)
+        intme = Integrator(func)
         for i in range(3):
             ind = flist.index(func)
             Rval = VAL[ind]
-            intme.plotmeval(i, realvalue = Rval )
+            intme.plotmeval(xmin, xmax, i, realvalue = Rval )
 
 if __name__ == '__main__':
 
@@ -287,11 +270,11 @@ if __name__ == '__main__':
     b = 10
     VAL = [50, 1000/3, 2500, 20000, 500000/3]
 
-    #functiontester(a, b, VAL)
+    functiontester(a, b, VAL)
 
     
     
-    intme = Integrator(f3, 0, 10)
+    intme = Integrator(f3)
     ltest1 = intme.w(10, 1)
     ltest2 = intme.w(10, 2)
 
