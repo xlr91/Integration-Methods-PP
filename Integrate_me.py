@@ -215,20 +215,26 @@ class Integrator:
         return wlist
 
     def AdaptInt(self, a, b, tau, intmeth, Q0 = 1000):
-        
+        #this is so slow omg
         N = 1
         if intmeth == 2:
             N = 2
 
         val = self.NCInt(a, b, N, intmeth) #this needs to be fixed because it needs to take range
+        #val = self.midpoint(a, b)
+        #print('val', val)
+        Q1 = +val
         err = abs(val - Q0)
-        if err >= tau:
+        #print('err', err)
+    
+        #print('checher', err-tau)
+        if err > tau:
             m = (a+b)/2
-            val = self.AdaptInt(a, m, tau, intmeth, Q0)
-            val += self.AdaptInt(m, b, tau, intmeth, Q0)
+            #print('')
+            val = self.AdaptInt(a, m, tau, intmeth, Q1) + self.AdaptInt(m, b, tau, intmeth, Q1)
         return val
     
-
+        
 
 
         #recursion bois
@@ -270,13 +276,17 @@ if __name__ == '__main__':
     b = 10
     VAL = [50, 1000/3, 2500, 20000, 500000/3]
 
-    functiontester(a, b, VAL)
+    #functiontester(a, b, VAL)
 
     
     
-    intme = Integrator(f3)
+    intme = Integrator(f4)
     ltest1 = intme.w(10, 1)
     ltest2 = intme.w(10, 2)
+    import time
+    start_time = time.time()
+    print(intme.AdaptInt(0, 10, 1e-2, 2))
+    print(time.time()-start_time)
 
     #for i in range(3):
         #intme.plotmeval(i, realvalue = 20000, Nmax = 25000, Ndiffs = 100)
