@@ -287,7 +287,7 @@ if __name__ == '__main__':
     b = 10
     VAL = [50, 1000/3, 2500, 20000, 500000/3]
 
-    #functiontester(a, b, VAL)
+    functiontester(a, b, VAL)
 
     
     
