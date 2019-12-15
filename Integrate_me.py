@@ -6,6 +6,8 @@
 class Integrator:
     def __init__(self, f):
         self.f = f
+        self.i = 0
+        self.j = 0
     
     def __repr__(self):
         newtuple = tuple([self.f])
@@ -196,6 +198,8 @@ class Integrator:
         
         if kind == 0:
             wlist = [h for i in range(N)]
+            #check the https://www.value-at-risk.net/numerical-integration-multiple-dimensions/#exercise_2_25
+            #cuz its [0, h]...
 
         elif kind == 1:
             wlist = [h for i in range(N)]
@@ -214,11 +218,14 @@ class Integrator:
 
         return wlist
 
-    def AdaptInt(self, a, b, tau, intmeth, Q0 = 1000):
+    def AdaptInt1(self, a, b, tau, intmeth, Q0 = 1000):
         #this is so slow omg
+        #this is using big division - small division
         N = 1
         if intmeth == 2:
             N = 2
+
+        self.i += 1
 
         val = self.NCInt(a, b, N, intmeth) #this needs to be fixed because it needs to take range
         #val = self.midpoint(a, b)
@@ -231,10 +238,61 @@ class Integrator:
         if err > tau:
             m = (a+b)/2
             #print('')
-            val = self.AdaptInt(a, m, tau, intmeth, Q1) + self.AdaptInt(m, b, tau, intmeth, Q1)
+            val = self.AdaptInt1(a, m, tau, intmeth, Q1) + self.AdaptInt1(m, b, tau, intmeth, Q1)
         return val
     
         
+    def AdaptInt2(self, a, b, tau, intmeth):
+        #this is so slow omg
+        #this is using small division1 - small division2
+        N = 1
+        if intmeth == 2:
+            N = 2
+
+        self.j += 1
+
+        val = self.NCInt(a, b, N, intmeth) #this needs to be fixed because it needs to take range
+        #val = self.midpoint(a, b)
+        #print('val', val)
+        m = (a+b)/2
+        val1 = self.NCInt(a, m, N, intmeth)
+        val2 = self.NCInt(m, b, N, intmeth)
+
+        err = val1 - val2
+
+        if abs(err) > tau:
+            if err > 0:
+                val = self.AdaptInt2(a, m, tau, intmeth)
+                val += self.AdaptInt2(m, b, tau, intmeth)
+            else:
+                val = self.AdaptInt2(m, b, tau, intmeth)
+                val += self.AdaptInt2(a, m, tau, intmeth)
+        return val
+        #print('err', err)
+
+    def MonteCarlo(self, a, b, n = 1000):
+        """
+        Method that performs the Monte Carlo Integration
+        ...
+
+        Attributes
+        ----------
+        n : int
+            Number of random points used
+        """
+        import random
+        random.seed(1) #used for reproducibility
+
+        f = self.f
+        fvalue = 0
+        for _ in range(n):
+            x = random.uniform(a, b)
+            fvalue += f(x)
+
+        favg = fvalue/n
+        return favg * (a-b)
+
+    
 
 
         #recursion bois
@@ -280,13 +338,22 @@ if __name__ == '__main__':
 
     
     
-    intme = Integrator(f4)
+    intme = Integrator(f5)
     ltest1 = intme.w(10, 1)
     ltest2 = intme.w(10, 2)
     import time
+
+    print('small - small')
     start_time = time.time()
-    print(intme.AdaptInt(0, 10, 1e-2, 2))
+    print(intme.AdaptInt2(0, 10, 1e-5, 2))
     print(time.time()-start_time)
+    print('calls', intme.j)
+    print('')
+    print('large - small')
+    start_time = time.time()
+    print('value', intme.AdaptInt1(0, 10, 1e-2, 2))
+    print('time taken', time.time()-start_time)
+    print('calls', intme.i)
 
     #for i in range(3):
         #intme.plotmeval(i, realvalue = 20000, Nmax = 25000, Ndiffs = 100)
