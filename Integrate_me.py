@@ -240,8 +240,7 @@ class Integrator:
             #print('')
             val = self.AdaptInt1(a, m, tau, intmeth, Q1) + self.AdaptInt1(m, b, tau, intmeth, Q1)
         return val
-    
-        
+      
     def AdaptInt2(self, a, b, tau, intmeth):
         #this is so slow omg
         #this is using small division1 - small division2
@@ -297,7 +296,48 @@ class Integrator:
 
         #recursion bois
         
+    def NCIntN(self, A, B, N, kind):
+        #A = [a1, a2, a3, ...]
+        #B = [b1 ,b2, b3, ...]
+        #N = [N1, N2, N3, ...]
+        #all must be of the same length
+        A = [0, 0]
+        B = [10, 10]
+        N = [10, 20]
+        
+        d = len(N)#number of dimensions
+        #Add a check for length of A B and N maybe
+        value = 0
+
+        H = [(B[i]-A[i]) / N[i] for i in range(d)]
+        #h = (b-a) / N
+        Wlist = [self.w(N[i], kind, H[i]) for i in range(d)]
+        #wlist = self.w(N, kind, h)
+        X = [[A[i] + j*H[i] for j in range(N[i]+1)] for i in range(d)]
+        
+
+        if kind == 0: #deals with the cmidpoint rule
+            for i in range(d):
+                x = X[i]
+                xnew = []
+                for j in range(N[i]):
+                    xa = x[j]
+                    xb = x[j+1]
+                    xnew.append((xb+xa)/2)
+                X[i] = xnew
+                N[i] -= 1
+        #wlist = self.w(N, kind, h)
+        
     
+        #need to work on this part now
+        for i in range(N+1):
+            #print(i)
+            #xi = self.xmin + i*h
+            #print('coord', xi)
+            value += Wlist[i] * self.f(x[i])
+            #print(value)
+        #return value
+        return value
 
 
 
@@ -338,7 +378,7 @@ if __name__ == '__main__':
 
     
     
-    intme = Integrator(f5)
+    intme = Integrator(f1)
     ltest1 = intme.w(10, 1)
     ltest2 = intme.w(10, 2)
     import time
@@ -355,6 +395,42 @@ if __name__ == '__main__':
     print('time taken', time.time()-start_time)
     print('calls', intme.i)
 
+
+
+    A = [0, 0]
+    B = [10, 10]
+    N = [10, 20]
+    kind = 1
+    
+    d = len(N)#number of dimensions
+    #Add a check for length of A B and N maybe
+    value = 0
+
+    H = [(B[i]-A[i]) / N[i] for i in range(d)]
+    #h = (b-a) / N
+    Wlist = [intme.w(N[i], kind, H[i]) for i in range(d)]
+    #wlist = self.w(N, kind, h)
+    X = [[A[i] + j*H[i] for j in range(N[i]+1)] for i in range(d)]
+    
+
+    if kind == 0: #deals with the cmidpoint rule
+        for i in range(d):
+            x = X[i]
+            xnew = []
+            for j in range(N[i]):
+                xa = x[j]
+                xb = x[j+1]
+                xnew.append((xb+xa)/2)
+            X[i] = xnew
+            N[i] -= 1
+
+    #need to be able to generalize the N for loops
+    '''
+    for i in range(N1):
+        for j in range(N2):
+            for k in range(N3)
+                have Wlist[0][i]*Wlist[1][j]*Wlist[2][k]*f(xi, xj, xk)
+    '''
     #for i in range(3):
         #intme.plotmeval(i, realvalue = 20000, Nmax = 25000, Ndiffs = 100)
     #    intme.plotmeval(i, realvalue = 20000)
