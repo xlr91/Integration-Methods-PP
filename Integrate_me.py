@@ -297,9 +297,9 @@ class Integrator:
         #recursion bois
         
     def NCIntN(self, A, B, N, kind):
-        #A = [a1, a2, a3, ...]
-        #B = [b1 ,b2, b3, ...]
-        #N = [N1, N2, N3, ...]
+        #A = [a1, a2, a3, ...] the lower bounds in each dimension
+        #B = [b1 ,b2, b3, ...] the upper bounds in each dimension
+        #N = [N1, N2, N3, ...] the number of points in each dimension
         #all must be of the same length
         A = [0, 0]
         B = [10, 10]

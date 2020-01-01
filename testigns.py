@@ -63,27 +63,52 @@ def loopme(I, n, wlistval):
     wlistval 
         
 
-
+ 
 
 #maybe we can start with value
+#this block of code is one we want to automate
 N = [2, 3, 4]
-d = 3
-V = [0, 0, 0]
-for x in range(3):
+
+d = len(N)
+V = [0 for i in range(d)]
+
+
+
+for x in range(N[0]):
     V[0] = x
-    for y in range(3):
+    for y in range(N[1]):
         V[1] = y
-        for z in range(3):
+        for z in range(N[2]):
             V[2] = z
-            #print([x, y, z])
             print(V)
+
+
+
+            #print([x, y, z])
             #V = []
 
 N = [2, 3, 4]
-d = 3
-V = [0, 0, 0]
+d = len(N)
+V = [0 for i in range(d)]
 
-def rec(d, V, n = 0, x = None):
+#THIS WORKSSSS try making it into a generator
+def rec(N, d, V, x = 0):
+    if x != d-1:
+        y = 1 * x
+        x += 1    
+        for i in range(N[y]):
+            V[y] = i
+            rec(N, d, V, x)
+    else:
+        for i in range(N[x]):
+            V[x] = i
+            print(V) #now i just need to do something with this
+
+
+
+
+#rec(N,d, V)
+def rec1(d, V, n = 0, x = None):
     d -= 1
     if d >= 1:
         for x in range(N[d]):
@@ -95,13 +120,14 @@ def rec(d, V, n = 0, x = None):
             V[d] = x
             for i in range(len(N)):
                 print(V)
-                thevalue *= Wlist[i][V[i]]
+                #thevalue *= Wlist[i][V[i]]
     
 '''
 #thevalue = f(xi, xj, xk), say its 1 for ease
 thevalue = 1 
 so then what you wanna do is 
-thevalue *= Wlist[0][i]*Wlist[1][j]*Wlist[2][k]*...
+thevalue = Wlist[0][i]*Wlist[1][j]*Wlist[2][k]*...
+its thevalue *= Wlist[this is the dimension number][point number]
 
 so its 
 thevalue *= Wlist[0][i]
@@ -115,8 +141,8 @@ ijk = [0, 0, 0] #this can be easily made
 #just need a way to change them all 
 thevalue = 1
 for o in range(d):
-    thevalue *= Wlist[o][ijk[o]]
-value += thevalue
+    thevalue *= Wlist[o][ijk[o]] this pseudocode works
+value += thevalue*functionvalue
 
 ijk[0] +=1
 if ijk[0] == something[0]:
