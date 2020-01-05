@@ -1,4 +1,4 @@
-import heartrate; heartrate.trace(browser=True)
+#import heartrate; heartrate.trace(browser=True)
 import time
 start_time = time.time()
 
