@@ -6,13 +6,13 @@ def f(x):
     return x**3
 
 
-class bin:
+class Bin:
     def __init__(self, a, b, n = 0, f = None):
         self.a = a
         self.b = b
         self.sum = 0
         self.sum2 = 0
-        self.n = n
+        self.n = n #no of points in this bin
         self.xval = []
 
         self.avg = 0 
@@ -21,7 +21,7 @@ class bin:
         self.f = f
     
     def __repr__(self):
-        newtuple = tuple([self.a, self.b, self.n])
+        newtuple = tuple([self.a, self.b, self.n, self.f])
         classname = self.__class__.__name__
         return '{}{}'.format(classname, newtuple)
     
@@ -57,8 +57,8 @@ class bin:
 
     def Bisect(self):
         midpoint = (self.a + self.b) / 2
-        A = bin(self.a, midpoint, self.n, self.f)
-        B = bin(midpoint, self.b, self.n, self.f)
+        A = Bin(self.a, midpoint, self.n, self.f)
+        B = Bin(midpoint, self.b, self.n, self.f)
         A.MC()
         B.MC()
         return A,B
@@ -91,7 +91,7 @@ Avar = []
 BinList = []
 
 for i in range(len(x)-1):
-    A = bin(x[i], x[i+1], Nintcheck, f)
+    A = Bin(x[i], x[i+1], Nintcheck, f)
     A.MC()
     BinList.append(A)
     Aval.append(A.val)

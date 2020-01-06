@@ -60,8 +60,8 @@ def wfval(V, Wlist, f, X):
         thevalue *= Wlist[o][V[o]]
         coords.append(X[o][V[o]])
     newtuple = tuple(coords)
-    classname = f.__name__
-    fstring = '{}{}'.format(classname, newtuple)
+    fname = f.__name__
+    fstring = '{}{}'.format(fname, newtuple)
     fval = eval(fstring)
     return [thevalue, fval]
 
