@@ -90,6 +90,7 @@ Aval = []
 Avar = []
 BinList = []
 
+#generates first general bins
 for i in range(len(x)-1):
     A = Bin(x[i], x[i+1], Nintcheck, f)
     A.MC()
@@ -98,7 +99,7 @@ for i in range(len(x)-1):
     Avar.append(A.var)
     #print(x[i], x[i+1])
 
-
+#does the stratified sampling bit
 while max(Avar) > MaxVar:
     maxind = Avar.index(max(Avar))
     newbins = BinList[maxind].Bisect()

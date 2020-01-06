@@ -1,5 +1,5 @@
 def f(x, y):
-    R = x**2 + y**2 
+    R = x**2 + y**2
     if R <= 1:
         return 1
     else:
@@ -65,22 +65,131 @@ class binN:
         self.avg2 = self.sum2 / self.n
         self.var = self.avg2 - (self.avg ** 2)
         diffs = [self.b[i] - self.a[i] for i in range(self.dim)]
-        print(diffs)
+        #print(diffs)
         self.val = self.avg
         for delta in diffs:
             self.val *= delta
 
     def Bisect(self):
-        midpoint = (self.a + self.b) / 2
-        A = bin(self.a, midpoint, self.n, self.f)
-        B = bin(midpoint, self.b, self.n, self.f)
+        midpoint = [(self.a[i] + self.b[i]) / 2  for i in range(self.dim)]
+        A = binN(self.a, midpoint, self.n, self.f)
+        B = binN(midpoint, self.b, self.n, self.f)
         A.MC()
         B.MC()
         return A,B
 
 
-A = [-1, -1]
-B = [1, 1]
 
-BIN = binN(A, B, 100000, f)
+
+def rec(N, d, V, x = 0):
+    '''
+    N = number of points in each dimension
+    d = number of dimensions (len(A))
+    V = list of indexes at for this iteration
+    '''
+    if x != d-1:
+        y = 1 * x
+        x += 1    
+        for i in range(N):
+            V[y] = i
+            yield from rec(N, d, V, x)
+    else:
+        for i in range(N):
+            V[x] = i
+            yield V
+            #V[x] = i
+            #can now stick a function in here related to V or make it a generator
+            #print(V) #now i just need to do something with this
+            #return V
+
+
+
+
+
+
+#A = [-5, -5, -5]
+#B = [5, 5, 5]
+
+
+A = [-5, -5]
+B = [5, 5]
+V = [0, 0]
+
+BIN = binN(A, B, 100, f)
 BIN.MC()
+
+#untested territory
+
+#variables
+N = 4 #number of bins per dim
+Nmax = 10 #number of bins per dim max 
+Nintcheck = 10 #used to estimate bin size
+Nint = 100000 #number of points per bin
+MaxVar = 10
+
+#A = bin(-1, -0.8)
+#A.smth(f, n = 10)
+
+
+d = len(A)
+
+import random
+random.seed(1) #used for reproducibility
+
+H = [(B[i]-A[i]) / N for i in range(d)]
+X = [[A[i] + j*H[i] for j in range(N+1)] for i in range(d)]
+
+
+Aval = []
+Avar = []
+BinList = []
+
+
+V = [0 for i in range(d)]
+
+REC = rec(N, d, V)
+
+acoord = [X[0][0], X[1][0]] #[X[dimension][indexer]]
+bcoord = [X[0][1], X[1][1]] 
+totrecs = d**N
+
+for _ in range(totrecs):
+    Vnow = next(REC)
+    Acoord = []
+    Bcoord = []
+    for o in range(d):
+        Acoord.append(X[o][Vnow[o]])
+        Bcoord.append(X[o][Vnow[o] + 1])
+
+    thebin = binN(Acoord, Bcoord, Nintcheck, f) 
+    thebin.MC()
+    BinList.append(thebin)
+    Aval.append(thebin.val)
+    Avar.append(thebin.var)
+
+#break now, continue next time
+
+'''
+while max(Avar) > MaxVar:
+    maxind = Avar.index(max(Avar))
+    newbins = BinList[maxind].Bisect()
+    BinList[maxind] = newbins[0]
+    Avar[maxind] = newbins[0].var
+    BinList.insert(maxind + 1, newbins[1])
+    Avar.insert(maxind + 1, newbins[1].var)
+
+j = 0
+for i in BinList:
+    i.MC(n = Nint)
+    j += i.val
+
+
+TotVal = sum(Aval)
+print('TotVal', TotVal)
+print('j', j)
+
+
+#can i make a bin class?
+time_taken = time.time()-start_time
+print('timetaken', time_taken)
+'''
