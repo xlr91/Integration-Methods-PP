@@ -72,11 +72,39 @@ class binN:
 
     def Bisect(self):
         midpoint = [(self.a[i] + self.b[i]) / 2  for i in range(self.dim)]
-        A = binN(self.a, midpoint, self.n, self.f)
-        B = binN(midpoint, self.b, self.n, self.f)
-        A.MC()
-        B.MC()
-        return A,B
+    
+        Vb = [0 for i in range(self.dim)]
+        REC = rec(2, self.dim, Vb)
+        newbins = []
+        
+        amb = [self.a, midpoint, self.b]
+
+        '''
+        a [-5, -5]
+        m [0, 0]
+        b [5, 5]
+
+        make amb = [[-5, -5], [0, 0] ,[5, 5]]
+        
+        want [amb[rec[d]][d], amb[rec[d]][d]] and [amb[rec[d] + 1][d], amb[rec[d] + 1][d]] 
+        [-5, -5], [0, 0] for [0, 0] => [amb[0][0], amb[0][1]] and [amb[1][0], amb[1][1]]
+        [-5, 0], [0, -5] for [0, 1] => [amb[0][0], amb[1][1]] and [amb[1][0], amb[2][1]]
+        [0, -5], [5, 0] for [1, 0] => [amb[1][0], amb[0][1]] and [amb[2][0], amb[1][1]]
+        [0, 0], [5, 5] for [1, 1] => [amb[1][0], amb[1][1]] and [amb[2][0], amb[2][1]]
+        '''
+
+        try:
+            while True:
+                Vnow = next(REC)
+                start = [amb[Vnow[d]][d] for d in range(self.dim)]
+                fin = [amb[Vnow[d] + 1][d] for d in range(self.dim)]
+                newbin = binN(start, fin, self.n, self.f)
+                newbin.MC()
+                newbins.append(newbin)
+        except:
+            pass
+
+        return newbins
 
 
 
