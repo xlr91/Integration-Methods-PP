@@ -4,41 +4,104 @@
 # demonstrate convergence, perform timing tests
 
 class Integrator:
+    '''
+    A class used to numerically integrate one or multi-dimensional functions using numerical methods
+    ...
+
+    Attributes
+    ----------
+    f : function 
+        The function meant to be integrated
+    i,j : int
+        A diagnostic attribute. i and j represents the number of calls AdaptInt1 and AdaptInt2 does, respectively.
+    '''
     def __init__(self, f):
+        '''
+        Initializer of the function. f is the function meant to be integrated. 
+        '''
         self.f = f
         self.i = 0
         self.j = 0
     
     def __repr__(self):
+        '''
+        returns an executable string that represents this class
+        '''
         newtuple = tuple([self.f])
         classname = self.__class__.__name__
         return '{}{}'.format(classname, newtuple)
 
     def midpoint(self, a, b):
+        '''
+        Integrates a one dimensional function using the midpoint rule. 
+
+        Attributes
+        ----------
+        a : float 
+            lower limit of function
+        b : float
+            upper limit of function
+        '''
+
         R = b-a
         return R*self.f((b+a)/2)
 
     def cmidpoint(self, a, b, N):
+        '''
+        Integrates a one dimensional function using the composite midpoint rule. 
+
+        Attributes
+        ----------
+        a : float 
+            lower limit of function
+        b : float
+            upper limit of function
+        N : int
+            Number of  intervals for the function to calculate
+        '''
         f = self.f
         h = (b-a)/N
         x = [a + i*h for i in range(N+1)]
         value =  0
-        xin = []
+
+        xin = [] #unused
         for i in range(N):
             xa = x[i]
             xb = x[i+1]
             value += (xb - xa) * f((xb+xa)/2)
             xin.append((xb+xa)/2)
         
-        #return value
         return value
 
     def trapz(self, a, b):
+        '''
+        Integrates a one dimensional function using the trapezium rule. 
+
+        Attributes
+        ----------
+        a : float 
+            lower limit of function
+        b : float
+            upper limit of function
+        '''
+
         f = self.f
         R = (b-a)/2
         return R*(f(a) + f(b))
 
     def ctrapz(self, a, b, N):
+        '''
+        Integrates a one dimensional function using the composite trapezium rule. 
+
+        Attributes
+        ----------
+        a : float 
+            lower limit of function
+        b : float
+            upper limit of function
+        N : int
+            Number of  intervals for the function to calculate
+        '''
         f = self.f
         h = (b-a)/N
         x = [a + i*h for i in range(N+1)]
@@ -52,34 +115,72 @@ class Integrator:
         return value
 
     def simpsons(self, a, b):
+        '''
+        Integrates a one dimensional function using the simpsons rule. 
+
+        Attributes
+        ----------
+        a : float 
+            lower limit of function
+        b : float
+            upper limit of function
+        '''
         f = self.f
         R = (b-a)/6
         return R * (f(a) + f(b) + 4*f((a+b)/2))
     
     def csimpsons(self, a, b, N):
+        '''
+        Integrates a one dimensional function using the composite simpsons rule. 
+
+        Attributes
+        ----------
+        a : float 
+            lower limit of function
+        b : float
+            upper limit of function
+        N : int
+            Number of  intervals for the function to calculate
+        '''
         f = self.f
         h = (b-a)/N
         R = h/3
         x = [a + i*h for i in range(N+1)]
-        thelist = []
+        weight = []
         for i in range(N):
             if i % 2 == 0:
-                thelist.append(2)
+                weight.append(2)
             else:
-                thelist.append(4)
-        thelist[0] = 1
-        thelist.append(1)
-        #print(thelist)
+                weight.append(4)
+        weight[0] = 1
+        weight.append(1)
+        
         value = 0 
         for i in range(N+1):
-            value += R * thelist[i] * f(x[i])
+            value += R * weight[i] * f(x[i])
         return value
 
     def retanalysis(self, a, b, Nmax, Ndiffs, intmethod):
+        '''
+        Performs time, convergence, and accuracy test as a function of intervals used
+        Uses the Newton-Cotes integration method
+
+        Attributes
+        ----------
+        a : float 
+            lower limit of function
+        b : float
+            upper limit of function
+        Nmax : int
+            Number of maximum intervals for the function to calculate
+        Ndiffs: int
+            Differences between successive intervals tested. eg. if Nmax = 5 and Ndiffs = 2, then those tested 
+            are N = 1, 3, 5
+        '''
         import time
-        
-        nPoints = [2]
         start_time = time.time()
+
+        nPoints = [2]
         intvalue = [self.NCInt(a, b, nPoints[0], intmethod)]
         time_taken = [time.time()-start_time]
 
@@ -97,20 +198,32 @@ class Integrator:
         return [nPoints, intvalue, time_taken]
 
     def plotme(self, a, b, intmethod, Nmax = 500, Ndiffs = 10, realvalue = None):
-        
+        '''
+        Performs time, convergence, and accuracy test as a function of intervals used
+        Uses the Newton-Cotes integration method
+        Plots results in two or three separate figures, depending on if realvalue was specified.
+
+        Attributes
+        ----------
+        a : float 
+            lower limit of function
+        b : float
+            upper limit of function
+        intmethod : 0, 1, 2
+            Method of choice for integration, per the NCInt method. 
+        Ndiffs: int
+            Differences between successive intervals tested. eg. if Nmax = 5 and Ndiffs = 2, then those tested 
+            are N = 1, 3, 5
+        realvalue: float
+            The real value of the integral. Used to compare the numerical integration with the analytical one.
+        '''
         import matplotlib.pyplot as plt 
         
         RetAn = self.retanalysis(a, b, Nmax, Ndiffs, intmethod)
 
         plt.figure(0)
         plt.title('Value of Integral as a function of sample points')
-        #plt.xlim(0, xlim)
-        #plt.ylim(0, 100)
-        #plt.hlines(10, 0, self.z[len(self.z)-1])
         plt.plot(RetAn[0], RetAn[1])
-        
-        #plt.xlabel('Redshift (z)')
-        #plt.ylabel('Percentage Difference ')
         plt.show()
 
         if realvalue != None:
@@ -127,16 +240,32 @@ class Integrator:
         #return nPoints
 
     def plotmeval(self, a, b, intmethod, Nmax = 500, Ndiffs = 10, realvalue = None):
+        '''
+        Performs time, convergence, and accuracy test as a function of intervals used
+        Uses the Newton-Cotes integration method
+        Plots results in one figure.
+
+        Attributes
+        ----------
+        a : float 
+            lower limit of function
+        b : float
+            upper limit of function
+        intmethod : 0, 1, 2
+            Method of choice for integration, per the NCInt method. 
+        Ndiffs: int
+            Differences between successive intervals tested. eg. if Nmax = 5 and Ndiffs = 2, then those tested 
+            are N = 1, 3, 5
+        realvalue: float
+            The real value of the integral. Used to compare the numerical integration with the analytical one.
+        '''
         import matplotlib.pyplot as plt
-        import numpy as np
         import matplotlib.gridspec as gridspec
 
         RetAn = self.retanalysis(a, b, Nmax, Ndiffs, intmethod)
-
+        
         fig = plt.figure(tight_layout=True)
-        #fig.suptitle('sup bruh ')
         gs = gridspec.GridSpec(2, 2)
-
         ax = fig.add_subplot(gs[0, :])
         ax.plot(RetAn[0], RetAn[2])
         ax.set_title('%s for intmethod %s' % (self.f.__name__, intmethod))
@@ -144,10 +273,9 @@ class Integrator:
         ax.set_xlabel('Number of Sample Points')
 
         if realvalue != None:
-
             ax = fig.add_subplot(gs[1,1])
-            
             RVlst = [(realvalue - i)*100 / realvalue for i in RetAn[1]]
+            
             ax.plot(RetAn[0], RVlst)
             ax.set_title('Percentage Diffs')
             ax.set_ylabel('Percentage Difference (%)')
@@ -162,21 +290,34 @@ class Integrator:
         ax.set_ylabel('Value of Integral')
         ax.set_xlabel('Number of Sample Points')
 
-        fig.align_labels()  # same as fig.align_xlabels(); fig.align_ylabels()
-
+        fig.align_labels()
         plt.show()
 
     def NCInt(self, a, b, N, kind):
-        #does it well for simpsons and trapz
-        #works for cmidpoint, more testing is required
-        #THis is newton-cotes integration, basically its all of the 
-        #three basic integrations all in one method (!!!)
+        '''
+        Integrates a one dimensional function using the Newton-Cotes Rule. 
+
+        Attributes
+        ----------
+        a : float 
+            lower limit of function
+        b : float
+            upper limit of function
+        N : int
+            Number of  intervals for the function to calculate
+        kind : int
+            Determines the weights used for the integration
+            0 = Midpoint Rule
+            1 = Trapezium Rule
+            2 = Simpsons Rule
+        '''
         value = 0
         h = (b-a) / N
         wlist = self.w(N, kind, h)
         x = [a + i*h for i in range(N+1)]
 
-        if kind == 0: #deals with the cmidpoint rule
+        #Dealing with midpoint rule, as x needs a change of coordinates
+        if kind == 0:
             xnew = []
             for i in range(N):
                 xa = x[i]
@@ -184,29 +325,39 @@ class Integrator:
                 xnew.append((xb+xa)/2)
             x = xnew
             N -= 1
-        #wlist = self.w(N, kind, h)
+
         for i in range(N+1):
-            #print(i)
-            #xi = self.xmin + i*h
-            #print('coord', xi)
             value += wlist[i] * self.f(x[i])
-            #print(value)
-        #return value
+        
         return value
 
-    def w(self, N, kind, h=1):
-        
-        if kind == 0:
-            wlist = [h for i in range(N)]
-            #check the https://www.value-at-risk.net/numerical-integration-multiple-dimensions/#exercise_2_25
-            #cuz its [0, h]...
+    def w(self, N, kind, h):
+        '''
+        Returns the weights used for the Newton-Cotes integration rule. Depends on the type of integration desired. 
 
-        elif kind == 1:
+        Attributes
+        ----------
+        N : int
+            Number of  intervals for the function to calculate
+        kind : int
+            Determines the weights used for the integration
+            0 = Midpoint Rule
+            1 = Trapezium Rule
+            2 = Simpsons Rule
+        h : float
+            The distance between two successive intervals
+        '''
+
+        #could also be done with a switch case
+        if kind == 0: #Midpoint Rule
+            wlist = [h for i in range(N)]
+
+        elif kind == 1: #Trapezium Rule
             wlist = [h for i in range(N)]
             wlist[0] = h/2
             wlist.append(h/2)
 
-        elif kind == 2:
+        elif kind == 2: #Simpsons Rule
             wlist = []
             for i in range(N):
                 if i % 2 == 0:
@@ -218,47 +369,68 @@ class Integrator:
 
         return wlist
 
-    def AdaptInt1(self, a, b, tau, intmeth, Q0 = 1000):
-        #this is so slow omg
-        #this is using big division - small division
+    def AdaptInt1(self, a, b, tau, intmeth, Q0 = 10000):
+        '''
+        Integrate using the Adaptive Integration Method, using the Newton-Cotes Rule. 
+        Uses the Big division - Small division to determine the error
+
+        Attributes
+        ----------
+        a : float 
+            lower limit of function
+        b : float
+            upper limit of function
+        tau : float
+            Error Tolerance
+        intmeth : int
+            Integration method of choice, from NCInt
+        Q0 : float
+            Variable used for recursion, compares current value with value from previous iteration
+        '''
         N = 1
         if intmeth == 2:
             N = 2
-
         self.i += 1
 
-        val = self.NCInt(a, b, N, intmeth) #this needs to be fixed because it needs to take range
-        #val = self.midpoint(a, b)
-        #print('val', val)
+        val = self.NCInt( a, b, N, intmeth) 
         Q1 = +val
         err = abs(val - Q0)
-        #print('err', err)
-    
-        #print('checher', err-tau)
+
         if err > tau:
             m = (a+b)/2
-            #print('')
             val = self.AdaptInt1(a, m, tau, intmeth, Q1) + self.AdaptInt1(m, b, tau, intmeth, Q1)
+        
         return val
       
     def AdaptInt2(self, a, b, tau, intmeth):
-        #this is so slow omg
-        #this is using small division1 - small division2
+        '''
+        Integrate using the Adaptive Integration Method, using the Newton-Cotes Rule. 
+        Uses the the difference between two divisions of the same level to calculate error
+
+        Attributes
+        ----------
+        a : float 
+            lower limit of function
+        b : float
+            upper limit of function
+        tau : float
+            Error Tolerance
+        intmeth : int
+            Integration method of choice, from NCInt
+        Q0 : float
+            Variable used for recursion, compares current value with value from previous iteration
+        '''
         N = 1
         if intmeth == 2:
             N = 2
-
         self.j += 1
 
         val = self.NCInt(a, b, N, intmeth) #this needs to be fixed because it needs to take range
-        #val = self.midpoint(a, b)
-        #print('val', val)
         m = (a+b)/2
         val1 = self.NCInt(a, m, N, intmeth)
         val2 = self.NCInt(m, b, N, intmeth)
 
         err = val1 - val2
-
         if abs(err) > tau:
             if err > 0:
                 val = self.AdaptInt2(a, m, tau, intmeth)
@@ -267,18 +439,21 @@ class Integrator:
                 val = self.AdaptInt2(m, b, tau, intmeth)
                 val += self.AdaptInt2(a, m, tau, intmeth)
         return val
-        #print('err', err)
-
+        
     def MonteCarlo(self, a, b, n = 1000):
         """
         Method that performs the Monte Carlo Integration
-        ...
-
+    
         Attributes
         ----------
+        a : float 
+            lower limit of function
+        b : float
+            upper limit of function
         n : int
             Number of random points used
         """
+
         import random
         random.seed(1) #used for reproducibility
 
@@ -291,10 +466,6 @@ class Integrator:
         favg = fvalue/n
         return favg * (a-b)
 
-    
-
-
-        #recursion bois
         
     def NCIntN(self, A, B, N, kind):
         #A = [a1, a2, a3, ...] the lower bounds in each dimension
@@ -374,13 +545,13 @@ if __name__ == '__main__':
     b = 10
     VAL = [50, 1000/3, 2500, 20000, 500000/3]
 
-    #functiontester(a, b, VAL)
+    functiontester(a, b, VAL)
 
     
     
     intme = Integrator(f1)
-    ltest1 = intme.w(10, 1)
-    ltest2 = intme.w(10, 2)
+    ltest1 = intme.w(10, 1, 1)
+    ltest2 = intme.w(10, 2, 1)
     import time
 
     print('small - small')

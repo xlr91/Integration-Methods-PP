@@ -72,7 +72,7 @@ b = 10
 N = 10 #number of bins
 Nmax = 10 #number of bins max
 Nintcheck = 10 #used to estimate bin size
-Nint = 100000 #number of points per bin
+Nint = 1000 #number of points per bin was 100000
 MaxVar = 10
 
 #A = bin(-1, -0.8)
@@ -122,3 +122,23 @@ print('j', j)
 #can i make a bin class?
 time_taken = time.time()-start_time
 print('timetaken', time_taken)
+
+'''
+
+#histogram stuffs lmao 
+xval = [i.val for i in BinList]
+binval = [i.a for i in BinList]
+binval.append(BinList[-1].b)
+
+import matplotlib.pyplot as plt
+#n, bins, patches = plt.hist(binval[:-1], binval, weights=xval)
+#plt.hist(xval, bins = binval)
+
+
+plt.xlabel('Smarts')
+plt.ylabel('Probability')
+plt.title('Histogram of IQ')
+plt.text(60, .025, r'$\mu=100,\ \sigma=15$')
+plt.grid(True)
+plt.show()
+'''
