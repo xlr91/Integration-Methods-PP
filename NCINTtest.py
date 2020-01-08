@@ -81,7 +81,7 @@ def fvalue(V, f, X):
 A = [0, 0, 0]
 B = [10, 10, 10]
 N = [100, 100, 100]
-kind = 2 #trapz 
+kind = 2 #simpsons 
 
 
 d = len(N)#number of dimensions
@@ -121,7 +121,7 @@ for _ in range(dmul):
     Vnow = next(gen)
     #value += wlistval(Vnow, Wlist)*fvalue(Vnow, f, X)
     
-    valnow = wfval(V, Wlist, f, X)
+    valnow = wfval(Vnow, Wlist, f, X)
     value += valnow[0]*valnow[1]
     
 
