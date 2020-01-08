@@ -139,25 +139,155 @@ class Integrator:
                 val = self.AdaptInt2(m, b, tau, intmeth)
                 val += self.AdaptInt2(a, m, tau, intmeth)
         return val
-        
-    def AdaptInt2N(self, A, B, tau, intmeth):
 
+
+
+    def NCIntN(self, A, B, N, kind):
+        """
+        Method that performs the Newton-Cotes Integration in multiple dimensions
+        All lists must have the same number of elements, which correspond to the total dimensions 
+        
+        Attributes
+        ----------
+        A : list of floats 
+            lower limits of function, each element corresponds to value at one dimension
+        B : list of floats
+            upper limits of function, each element corresponds to value at one dimension
+        N : list of ints
+            Number intervals in a specific dimension.
+        kind : int
+            Number corresponding to the type of Newton-Cotes integration needed.
+        """
+
+        def rec(N, d, V, x = 0):
+            '''
+            Generator Function used for getting the multidimensional weight indexer.
+            
+            N = number of points in each dimension as a list
+            d = number of dimensions (len(A))
+            V = list of indexes at for this iteration
+            '''
+            if x != d-1:
+                y = 1 * x
+                x += 1    
+                for i in range(N[y]):
+                    V[y] = i
+                    yield from rec(N, d, V, x)
+            else:
+                for i in range(N[x]):
+                    V[x] = i
+                    yield V
+
+        def wfval(V, Wlist, f, X):
+            '''
+            Function that returns the value of a multidimensional function and the weights
+            Given the indexer list V
+
+            Attributes
+            ----------
+            V : List of ints
+                Indexer list. Each integer shows which weight is used for that particular dim
+                From the rec generator
+            Wlist : List of Lists
+                The Weight lists, from 
+            '''
+            thevalue = 1
+            coords = []
+            for o in range(len(V)):
+                thevalue *= Wlist[o][V[o]]
+                coords.append(X[o][V[o]])
+            newtuple = tuple(coords)
+            fname = f.__name__
+            fstring = '{}{}'.format(fname, newtuple)
+            fval = eval(fstring)
+            return [thevalue, fval]
+
+        '''
+        #Variables
+        A = [0, 0, 0]
+        B = [10, 10, 10]
+        N = [100, 100, 100]
+        kind = 2 #trapz 
+        '''
+        #Initialized number of dimensions and indexer V
+        d = len(N)
+        V = [0 for i in range(d)]
+        gen = rec(N, d, V)
+        f = self.f
+        value = 0
+
+        dmul = 1
+        for i in range(d):
+            dmul *= N[i]
+
+        H = [(B[i]-A[i]) / N[i] for i in range(d)]
+        Wlist = [self.w(N[i], kind, H[i]) for i in range(d)]
+        X = [[A[i] + j*H[i] for j in range(N[i]+1)] for i in range(d)]
+
+        #deals with the cmidpoint rule
+        if kind == 0: 
+            for i in range(d):
+                x = X[i]
+                xnew = []
+                for j in range(N[i]):
+                    xa = x[j]
+                    xb = x[j+1]
+                    xnew.append((xb+xa)/2)
+                X[i] = xnew
+                N[i] -= 1
+
+        for _ in range(dmul):
+            Vnow = next(gen)        
+            valnow = wfval(Vnow, Wlist, f, X)
+            value += valnow[0]*valnow[1]
+            
+        return value
+
+
+
+
+
+
+    def AdaptInt2N(self, A, B, tau, intmeth):
+        
+        dim= len(A)
         N = 1
         if intmeth == 2:
             N = 2
         self.j += 1
 
         val = self.NCIntN(A, B, N, intmeth) #this needs to be fixed because it needs to take range
-        m = (a+b)/2
-        val1 = self.NCInt(a, m, N, intmeth)
-        val2 = self.NCInt(m, b, N, intmeth)
 
-        err = val1 - val2
+        #Bisection
+        M = [(A[i] + N[i]) / 2  for i in range(dim)]
+        Vb = [0 for i in range(dim)]
+        REC = rec(2, dim, Vb)
+        amb = [A, M, B]
+        newvals = []
+        startlist = []
+        finlist = []
+
+        try:
+            while True:
+                Vnow = next(REC)
+                start = [amb[Vnow[d]][d] for d in range(self.dim)]
+                startlist.append(start)
+
+                fin = [amb[Vnow[d] + 1][d] for d in range(self.dim)]
+                finlist.append(start)
+                
+                newval = self.NCIntN(start, fin, tau, intmeth)
+                newvals.append(newval)
+        except:
+            pass
+
+
+        err = max(newvals) - min(newvals)
         if abs(err) > tau:
-            if err > 0:
-                val = self.AdaptInt2(a, m, tau, intmeth)
-                val += self.AdaptInt2(m, b, tau, intmeth)
-            else:
-                val = self.AdaptInt2(m, b, tau, intmeth)
-                val += self.AdaptInt2(a, m, tau, intmeth)
+            val = 0
+            for i in range(len(newvals)):
+                val += self.AdaptInt2N(startlist[i], finlist[i], tau, intmeth)
+
         return val
+
+
