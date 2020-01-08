@@ -1,9 +1,18 @@
-def f(x, y):
+import time
+start_time = time.time()
+
+def g(x, y):
     R = x**2 + y**2
     if R <= 1:
         return 1
     else:
         return 0
+
+def f(x, y):
+    value = (-(x**2 + y**2) + 1) * 100
+    if value < 0:
+        value = 0
+    return value
 
 class binN:
     def __init__(self, a, b, n = 0, f = None):
@@ -139,20 +148,22 @@ def rec(N, d, V, x = 0):
 #B = [5, 5, 5]
 
 
-A = [-5, -5]
-B = [5, 5]
+A = [-1, -1]
+B = [1, 1]
 V = [0, 0]
 
-BIN = binN(A, B, 100, f)
+
+BIN = binN(A, B, 10000, f)
 BIN.MC()
 
+print(BIN.val)
 #untested territory
 
 #variables
 N = 4 #number of bins per dim
 Nmax = 10 #number of bins per dim max 
 Nintcheck = 10 #used to estimate bin size
-Nint = 100000 #number of points per bin
+Nint = 1000 #number of points per bin
 MaxVar = 10
 
 #A = bin(-1, -0.8)
@@ -179,7 +190,7 @@ REC = rec(N, d, V)
 
 acoord = [X[0][0], X[1][0]] #[X[dimension][indexer]]
 bcoord = [X[0][1], X[1][1]] 
-totrecs = d**N
+totrecs = N**d #was d**N
 
 for _ in range(totrecs):
     Vnow = next(REC)
@@ -195,29 +206,36 @@ for _ in range(totrecs):
     Aval.append(thebin.val)
     Avar.append(thebin.var)
 
-#break now, continue next time
 
-'''
+
+
 while max(Avar) > MaxVar:
     maxind = Avar.index(max(Avar))
     newbins = BinList[maxind].Bisect()
-    BinList[maxind] = newbins[0]
-    Avar[maxind] = newbins[0].var
-    BinList.insert(maxind + 1, newbins[1])
-    Avar.insert(maxind + 1, newbins[1].var)
+    newvars = [i.var for i in newbins]
 
-j = 0
+    del BinList[maxind]
+    del Avar[maxind]
+
+    BinList += newbins
+    Avar += newvars
+
+
+
+
+
+
+finalval = 0
 for i in BinList:
     i.MC(n = Nint)
-    j += i.val
+    finalval += i.val
 
 
 TotVal = sum(Aval)
 print('TotVal', TotVal)
-print('j', j)
+print('Final Value', finalval)
 
 
 #can i make a bin class?
 time_taken = time.time()-start_time
 print('timetaken', time_taken)
-'''
