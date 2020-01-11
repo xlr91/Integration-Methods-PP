@@ -3,6 +3,171 @@
 ## check what the uncertainty is as a function of sampled points n
 # demonstrate convergence, perform timing tests
 
+class Bin:
+    def __init__(self, a, b, n = 0, f = None):
+        self.a = a
+        self.b = b
+        self.sum = 0
+        self.sum2 = 0
+        self.n = n #no of points in this bin
+        self.xval = []
+
+        self.avg = 0 
+        self.avg2 = 0
+        self.var = 0
+        self.f = f
+    
+    def __repr__(self):
+        newtuple = tuple([self.a, self.b, self.n, self.f])
+        classname = self.__class__.__name__
+        return '{}{}'.format(classname, newtuple)
+    
+    def MC(self, f = None, n = None):
+        import random
+        random.seed(1)
+
+        if n == None:
+            n = self.n
+        else:
+            self.n = n
+
+        if f == None:
+            f = self.f
+        else:
+            self.f = f
+
+        self.sum = 0
+        self.sum2 = 0
+        self.xval = []
+
+        for _ in range(n): 
+            x = random.uniform(self.a, self.b)
+            self.xval.append(x)
+            fv = f(x)
+            self.sum += fv
+            self.sum2 += fv ** 2
+        
+        self.avg = self.sum / self.n
+        self.avg2 = self.sum2 / self.n
+        self.var = self.avg2 - (self.avg ** 2)
+        self.val = self.avg * (self.b-self.a)
+
+    def Bisect(self):
+        midpoint = (self.a + self.b) / 2
+        A = Bin(self.a, midpoint, self.n, self.f)
+        B = Bin(midpoint, self.b, self.n, self.f)
+        A.MC()
+        B.MC()
+        return A,B
+
+class binN:
+    def __init__(self, a, b, n = 0, f = None):
+        self.a = a
+        self.b = b
+        self.sum = 0
+        self.sum2 = 0
+        self.n = n
+        self.dim = len(a)
+        self.xval = []
+
+        self.avg = 0 
+        self.avg2 = 0
+        self.var = 0
+        self.f = f
+    
+    def __repr__(self):
+        newtuple = tuple([self.a, self.b, self.n, self.f])
+        classname = self.__class__.__name__
+        return '{}{}'.format(classname, newtuple)
+    
+    def MC(self, f = None, n = None):
+        import random
+        random.seed(1)
+
+        if n == None:
+            n = self.n
+        else:
+            self.n = n
+
+        if f == None:
+            f = self.f
+        else:
+            self.f = f
+
+        self.sum = 0
+        self.sum2 = 0
+        self.xval = []
+
+        for _ in range(n): #points
+            coords = []
+            for d in range(self.dim):
+                x = random.uniform(self.a[d], self.b[d])
+                coords.append(x)
+                #print(x)
+            
+            newtuple = tuple(coords)
+            fname = f.__name__
+            fstring = '{}{}'.format(fname, newtuple)
+            fval = eval(fstring)
+            
+
+            self.sum += fval
+            self.sum2 += fval**2
+
+
+        
+        self.avg = self.sum / self.n
+        self.avg2 = self.sum2 / self.n
+        self.var = self.avg2 - (self.avg ** 2)
+        diffs = [self.b[i] - self.a[i] for i in range(self.dim)]
+        #print(diffs)
+        self.val = self.avg
+        for delta in diffs:
+            self.val *= delta
+
+
+    def rec(self, N, d, V, x = 0):
+        '''
+        Generator Function used for getting the multidimensional weight indexer.
+        
+        N = number of points in each dimension as a number
+        d = number of dimensions (len(A))
+        V = list of indexes at for this iteration
+        '''
+        if x != d-1:
+            y = 1 * x
+            x += 1    
+            for i in range(N):
+                V[y] = i
+                yield from self.rec(N, d, V, x)
+        else:
+            for i in range(N):
+                V[x] = i
+                yield V
+
+    def Bisect(self):
+        midpoint = [(self.a[i] + self.b[i]) / 2  for i in range(self.dim)]
+    
+        Vb = [0 for i in range(self.dim)]
+        REC = self.rec(2, self.dim, Vb)
+        newbins = []
+        
+        amb = [self.a, midpoint, self.b]
+
+        try:
+            while True:
+                Vnow = next(REC)
+                start = [amb[Vnow[d]][d] for d in range(self.dim)]
+                fin = [amb[Vnow[d] + 1][d] for d in range(self.dim)]
+                newbin = binN(start, fin, self.n, self.f)
+                newbin.MC()
+                newbins.append(newbin)
+        except:
+            pass
+
+        return newbins
+
+
 class Integrator:
     '''
     A class used to numerically integrate one or multi-dimensional functions using numerical methods
@@ -466,28 +631,91 @@ class Integrator:
         favg = fvalue/n
         return favg * (a-b)
 
-        
+    #Test me        
     def NCIntN(self, A, B, N, kind):
-        #A = [a1, a2, a3, ...] the lower bounds in each dimension
-        #B = [b1 ,b2, b3, ...] the upper bounds in each dimension
-        #N = [N1, N2, N3, ...] the number of points in each dimension
-        #all must be of the same length
-        A = [0, 0]
-        B = [10, 10]
-        N = [10, 20]
+        """
+        Method that performs the Newton-Cotes Integration in multiple dimensions
+        All lists must have the same number of elements, which correspond to the total dimensions 
         
-        d = len(N)#number of dimensions
-        #Add a check for length of A B and N maybe
+        Attributes
+        ----------
+        A : list of floats 
+            lower limits of function, each element corresponds to value at one dimension
+        B : list of floats
+            upper limits of function, each element corresponds to value at one dimension
+        N : list of ints
+            Number intervals in a specific dimension.
+        kind : int
+            Number corresponding to the type of Newton-Cotes integration needed.
+        """
+
+        def rec(N, d, V, x = 0):
+            '''
+            Generator Function used for getting the multidimensional weight indexer.
+            
+            N = number of points in each dimension as a list
+            d = number of dimensions (len(A))
+            V = list of indexes at for this iteration
+            '''
+            if x != d-1:
+                y = 1 * x
+                x += 1    
+                for i in range(N[y]):
+                    V[y] = i
+                    yield from rec(N, d, V, x)
+            else:
+                for i in range(N[x]):
+                    V[x] = i
+                    yield V
+
+        def wfval(V, Wlist, f, X):
+            '''
+            Function that returns the value of a multidimensional function and the weights
+            Given the indexer list V
+
+            Attributes
+            ----------
+            V : List of ints
+                Indexer list. Each integer shows which weight is used for that particular dim
+                From the rec generator
+            Wlist : List of Lists
+                The Weight lists, from 
+            '''
+            thevalue = 1
+            coords = []
+            for o in range(len(V)):
+                thevalue *= Wlist[o][V[o]]
+                coords.append(X[o][V[o]])
+            newtuple = tuple(coords)
+            fname = f.__name__
+            fstring = '{}{}'.format(fname, newtuple)
+            fval = eval(fstring)
+            return [thevalue, fval]
+
+        '''
+        #Variables
+        A = [0, 0, 0]
+        B = [10, 10, 10]
+        N = [100, 100, 100]
+        kind = 2 #trapz 
+        '''
+        #Initialized number of dimensions and indexer V
+        d = len(N)
+        V = [0 for i in range(d)]
+        gen = rec(N, d, V)
+        f = self.f
         value = 0
 
-        H = [(B[i]-A[i]) / N[i] for i in range(d)]
-        #h = (b-a) / N
-        Wlist = [self.w(N[i], kind, H[i]) for i in range(d)]
-        #wlist = self.w(N, kind, h)
-        X = [[A[i] + j*H[i] for j in range(N[i]+1)] for i in range(d)]
-        
+        dmul = 1
+        for i in range(d):
+            dmul *= N[i]
 
-        if kind == 0: #deals with the cmidpoint rule
+        H = [(B[i]-A[i]) / N[i] for i in range(d)]
+        Wlist = [self.w(N[i], kind, H[i]) for i in range(d)]
+        X = [[A[i] + j*H[i] for j in range(N[i]+1)] for i in range(d)]
+
+        #deals with the cmidpoint rule
+        if kind == 0: 
             for i in range(d):
                 x = X[i]
                 xnew = []
@@ -497,19 +725,180 @@ class Integrator:
                     xnew.append((xb+xa)/2)
                 X[i] = xnew
                 N[i] -= 1
-        #wlist = self.w(N, kind, h)
-        
-    
-        #need to work on this part now
-        for i in range(N+1):
-            #print(i)
-            #xi = self.xmin + i*h
-            #print('coord', xi)
-            value += Wlist[i] * self.f(x[i])
-            #print(value)
-        #return value
+
+        for _ in range(dmul):
+            Vnow = next(gen)        
+            valnow = wfval(Vnow, Wlist, f, X)
+            value += valnow[0]*valnow[1]
+            
         return value
 
+    def StratSamp(self, a, b, Nbin, Ninbin, Nintcheck = 10, MaxVar = 10):
+        """
+        Method that performs one-dimensional Stratified Sampling MC.
+        
+        Attributes
+        ----------
+        a : float
+            lower limit
+        b : float
+            upper limit
+        Nbin : int
+            Number of initial bins used to divide the range
+        Ninbin : int
+            Number of points used to perform MC in each bin once bins have been divided
+        Nintcheck : int
+            Number of points used to perform MC used to estimate the variance in the bin
+        MaxVar : float
+            Maximum variance in each bin. If the bin's variance exceeds this, bin will be subdivided
+        """ 
+        N = Nbin
+        Nint = Ninbin
+
+        import random
+        random.seed(1) #used for reproducibility
+        '''
+        #variables
+        a = 0
+        b = 10
+        N = 10 #number of bins
+        Nintcheck = 10 #used to estimate bin size
+        Nint = 1000 #number of points per bin was 100000
+        MaxVar = 10
+        '''
+
+        h = (b-a) / N
+        x = [a + i*h for i in range(N+1)]
+
+        Aval = []
+        Avar = []
+        BinList = []
+
+        #generates initial bins
+        for i in range(len(x)-1):
+            A = Bin(x[i], x[i+1], Nintcheck, self.f)
+            A.MC()
+            BinList.append(A)
+            Aval.append(A.val)
+            Avar.append(A.var)
+        
+
+        #Stratified Sampling alg
+        while max(Avar) > MaxVar:
+            maxind = Avar.index(max(Avar))
+            newbins = BinList[maxind].Bisect()
+            BinList[maxind] = newbins[0]
+            Avar[maxind] = newbins[0].var
+            BinList.insert(maxind + 1, newbins[1])
+            Avar.insert(maxind + 1, newbins[1].var)
+
+        finalval = 0
+        for i in BinList:
+            i.MC(n = Nint)
+            finalval += i.val
+
+        return finalval
+
+    def StratSampN(self, a, b, Nbin, Ninbin, Nintcheck = 10, MaxVar = 10):
+        """
+        Method that performs multi-dimensional Stratified Sampling MC.
+        
+        Attributes
+        ----------
+        A : List
+            each element is the lower limits for a particular dimension
+        B : List
+            each element is the lower limits for a particular dimension
+        Nbin : int
+            Number of initial bins used to divide the range
+        Ninbin : int
+            Number of points used to perform MC in each bin once bins have been divided
+        Nintcheck : int
+            Number of points used to perform MC used to estimate the variance in the bin
+        MaxVar : float
+            Maximum variance in each bin. If the bin's variance exceeds this, bin will be subdivided
+        """ 
+        def rec(N, d, V, x = 0):
+            '''
+            Generator Function used for getting the multidimensional weight indexer.
+            
+            N = number of points in each dimension as a number
+            d = number of dimensions (len(A))
+            V = list of indexes at for this iteration
+            '''
+            if x != d-1:
+                y = 1 * x
+                x += 1    
+                for i in range(N):
+                    V[y] = i
+                    yield from rec(N, d, V, x)
+            else:
+                for i in range(N):
+                    V[x] = i
+                    yield V
+        
+        N = Nbin
+        Nint = Ninbin
+
+        '''
+        #variables
+        N = 4 #number of bins per dim
+        Nintcheck = 10 #used to estimate bin size
+        Nint = 1000 #number of points per bin
+        MaxVar = 10
+        '''
+
+
+        d = len(A)
+        V = [0 for i in range(d)]
+
+        import random
+        random.seed(1) #used for reproducibility
+
+        H = [(B[i]-A[i]) / N for i in range(d)]
+        X = [[A[i] + j*H[i] for j in range(N+1)] for i in range(d)]
+
+
+        Aval = []
+        Avar = []
+        BinList = []
+
+        REC = rec(N, d, V)
+        
+        #Initial division of bins
+        totrecs = N**d
+        for _ in range(totrecs):
+            Vnow = next(REC)
+            Acoord = []
+            Bcoord = []
+            for o in range(d):
+                Acoord.append(X[o][Vnow[o]])
+                Bcoord.append(X[o][Vnow[o] + 1])
+
+            thebin = binN(Acoord, Bcoord, Nintcheck, self.f) 
+            thebin.MC()
+            BinList.append(thebin)
+            Aval.append(thebin.val)
+            Avar.append(thebin.var)
+
+        #Stratified Sampling Alg
+        while max(Avar) > MaxVar:
+            maxind = Avar.index(max(Avar))
+            newbins = BinList[maxind].Bisect()
+            newvars = [i.var for i in newbins]
+            
+            del BinList[maxind]
+            del Avar[maxind]
+            
+            BinList += newbins
+            Avar += newvars
+
+        finalval = 0
+        for i in BinList:
+            i.MC(n = Nint)
+            finalval += i.val
+
+        return finalval
 
 
 
@@ -527,8 +916,6 @@ def f4(x):
 
 def f5(x):
     return x**5
-
-
 
 def functiontester(xmin, xmax, VAL):
     flist = [f1, f2, f3, f4, f5]
