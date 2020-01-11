@@ -246,7 +246,7 @@ class Integrator:
 
 
 
-
+    '''
 
     def AdaptInt2N(self, A, B, tau, intmeth):
         
@@ -261,7 +261,7 @@ class Integrator:
         #Bisection
         M = [(A[i] + N[i]) / 2  for i in range(dim)]
         Vb = [0 for i in range(dim)]
-        REC = rec(2, dim, Vb)
+        REC = self.rec(2, dim, Vb)
         amb = [A, M, B]
         newvals = []
         startlist = []
@@ -290,4 +290,4 @@ class Integrator:
 
         return val
 
-
+    '''

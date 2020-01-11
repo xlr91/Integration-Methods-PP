@@ -3,6 +3,9 @@
 ## check what the uncertainty is as a function of sampled points n
 # demonstrate convergence, perform timing tests
 
+
+
+
 class Bin:
     def __init__(self, a, b, n = 0, f = None):
         self.a = a
@@ -125,31 +128,11 @@ class binN:
         for delta in diffs:
             self.val *= delta
 
-
-    def rec(self, N, d, V, x = 0):
-        '''
-        Generator Function used for getting the multidimensional weight indexer.
-        
-        N = number of points in each dimension as a number
-        d = number of dimensions (len(A))
-        V = list of indexes at for this iteration
-        '''
-        if x != d-1:
-            y = 1 * x
-            x += 1    
-            for i in range(N):
-                V[y] = i
-                yield from self.rec(N, d, V, x)
-        else:
-            for i in range(N):
-                V[x] = i
-                yield V
-
     def Bisect(self):
         midpoint = [(self.a[i] + self.b[i]) / 2  for i in range(self.dim)]
     
         Vb = [0 for i in range(self.dim)]
-        REC = self.rec(2, self.dim, Vb)
+        REC = Integrator().rec(2, self.dim, Vb)
         newbins = []
         
         amb = [self.a, midpoint, self.b]
@@ -180,7 +163,7 @@ class Integrator:
     i,j : int
         A diagnostic attribute. i and j represents the number of calls AdaptInt1 and AdaptInt2 does, respectively.
     '''
-    def __init__(self, f):
+    def __init__(self, f = None):
         '''
         Initializer of the function. f is the function meant to be integrated. 
         '''
@@ -631,7 +614,34 @@ class Integrator:
         favg = fvalue/n
         return favg * (a-b)
 
-    #Test me        
+    #Test me
+
+
+    def rec(self, N, d, V, x = 0):
+        '''
+        Generator Function used for getting the multidimensional weight indexer.
+        
+        N = number of points in each dimension as a list
+        d = number of dimensions (len(A))
+        V = list of indexes at for this iteration
+        '''
+
+        if type(N) != list:
+            Nnew = [N for i in range(len(A))]
+            N = Nnew
+
+        if x != d-1:
+            y = 1 * x
+            x += 1    
+            for i in range(N[y]):
+                V[y] = i
+                yield from self.rec(N, d, V, x)
+        else:
+            for i in range(N[x]):
+                V[x] = i
+                yield V
+
+   
     def NCIntN(self, A, B, N, kind):
         """
         Method that performs the Newton-Cotes Integration in multiple dimensions
@@ -648,25 +658,6 @@ class Integrator:
         kind : int
             Number corresponding to the type of Newton-Cotes integration needed.
         """
-
-        def rec(N, d, V, x = 0):
-            '''
-            Generator Function used for getting the multidimensional weight indexer.
-            
-            N = number of points in each dimension as a list
-            d = number of dimensions (len(A))
-            V = list of indexes at for this iteration
-            '''
-            if x != d-1:
-                y = 1 * x
-                x += 1    
-                for i in range(N[y]):
-                    V[y] = i
-                    yield from rec(N, d, V, x)
-            else:
-                for i in range(N[x]):
-                    V[x] = i
-                    yield V
 
         def wfval(V, Wlist, f, X):
             '''
@@ -702,7 +693,6 @@ class Integrator:
         #Initialized number of dimensions and indexer V
         d = len(N)
         V = [0 for i in range(d)]
-        gen = rec(N, d, V)
         f = self.f
         value = 0
 
@@ -725,6 +715,8 @@ class Integrator:
                     xnew.append((xb+xa)/2)
                 X[i] = xnew
                 N[i] -= 1
+
+        gen = self.rec(N, d, V)
 
         for _ in range(dmul):
             Vnow = next(gen)        
@@ -818,24 +810,7 @@ class Integrator:
         MaxVar : float
             Maximum variance in each bin. If the bin's variance exceeds this, bin will be subdivided
         """ 
-        def rec(N, d, V, x = 0):
-            '''
-            Generator Function used for getting the multidimensional weight indexer.
-            
-            N = number of points in each dimension as a number
-            d = number of dimensions (len(A))
-            V = list of indexes at for this iteration
-            '''
-            if x != d-1:
-                y = 1 * x
-                x += 1    
-                for i in range(N):
-                    V[y] = i
-                    yield from rec(N, d, V, x)
-            else:
-                for i in range(N):
-                    V[x] = i
-                    yield V
+
         
         N = Nbin
         Nint = Ninbin
@@ -863,7 +838,7 @@ class Integrator:
         Avar = []
         BinList = []
 
-        REC = rec(N, d, V)
+        REC = self.rec(N, d, V)
         
         #Initial division of bins
         totrecs = N**d
@@ -899,6 +874,50 @@ class Integrator:
             finalval += i.val
 
         return finalval
+
+
+    def AdaptInt2N(self, A, B, tau, intmeth):
+        
+        dim= len(A)
+        N = 1
+        if intmeth == 2:
+            N = 2
+        self.j += 1
+
+        val = self.NCIntN(A, B, N, intmeth) #this needs to be fixed because it needs to take range
+
+        #Bisection
+        M = [(A[i] + N[i]) / 2  for i in range(dim)]
+        Vb = [0 for i in range(dim)]
+        REC = self.rec(2, dim, Vb)
+        amb = [A, M, B]
+        newvals = []
+        startlist = []
+        finlist = []
+
+        try:
+            while True:
+                Vnow = next(REC)
+                start = [amb[Vnow[d]][d] for d in range(self.dim)]
+                startlist.append(start)
+
+                fin = [amb[Vnow[d] + 1][d] for d in range(self.dim)]
+                finlist.append(start)
+                
+                newval = self.NCIntN(start, fin, tau, intmeth)
+                newvals.append(newval)
+        except:
+            pass
+
+
+        err = max(newvals) - min(newvals)
+        if abs(err) > tau:
+            val = 0
+            for i in range(len(newvals)):
+                val += self.AdaptInt2N(startlist[i], finlist[i], tau, intmeth)
+
+        return val
+
 
 
 
