@@ -212,12 +212,12 @@ class Integrator:
         x = [a + i*h for i in range(N+1)]
         value =  0
 
-        xin = [] #unused
+        #xin = [] #unused
         for i in range(N):
             xa = x[i]
             xb = x[i+1]
             value += (xb - xa) * f((xb+xa)/2)
-            xin.append((xb+xa)/2)
+            #xin.append((xb+xa)/2)
         
         return value
 
@@ -578,7 +578,8 @@ class Integrator:
         val1 = self.NCInt(a, m, N, intmeth)
         val2 = self.NCInt(m, b, N, intmeth)
 
-        err = val1 - val2
+        #err = val1 - val2
+        err = val - (val1 + val2)
         if abs(err) > tau:
             if err > 0:
                 val = self.AdaptInt2(a, m, tau, intmeth)
@@ -951,11 +952,11 @@ if __name__ == '__main__':
     b = 10
     VAL = [50, 1000/3, 2500, 20000, 500000/3]
 
-    functiontester(a, b, VAL)
+    #functiontester(a, b, VAL)
 
     
     
-    intme = Integrator(f1)
+    intme = Integrator(f4)
     ltest1 = intme.w(10, 1, 1)
     ltest2 = intme.w(10, 2, 1)
     import time
