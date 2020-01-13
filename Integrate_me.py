@@ -674,7 +674,7 @@ class Integrator:
             fvalue += f(x)
 
         favg = fvalue/n
-        return favg * (a-b)
+        return favg * (b-a)
 
     #Test me
     def rec(self, N, d, V, x = 0):
