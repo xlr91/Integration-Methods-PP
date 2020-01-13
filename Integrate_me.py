@@ -1,9 +1,5 @@
-
-
 ## check what the uncertainty is as a function of sampled points n
 # demonstrate convergence, perform timing tests
-
-
 
 
 class Bin:
@@ -12,7 +8,14 @@ class Bin:
         self.b = b
         self.sum = 0
         self.sum2 = 0
+
+        self.islist = False
+
+        if type(self.a) == list:
+            self.islist = True
+            self.dim = len(a)
         self.n = n #no of points in this bin
+
         self.xval = []
 
         self.avg = 0 
@@ -43,26 +46,80 @@ class Bin:
         self.sum2 = 0
         self.xval = []
 
-        for _ in range(n): 
-            x = random.uniform(self.a, self.b)
-            self.xval.append(x)
-            fv = f(x)
-            self.sum += fv
-            self.sum2 += fv ** 2
-        
-        self.avg = self.sum / self.n
-        self.avg2 = self.sum2 / self.n
-        self.var = self.avg2 - (self.avg ** 2)
-        self.val = self.avg * (self.b-self.a)
+
+        if self.islist == False:
+            for _ in range(n): 
+                x = random.uniform(self.a, self.b)
+                self.xval.append(x)
+                fv = f(x)
+                self.sum += fv
+                self.sum2 += fv ** 2
+            
+            self.avg = self.sum / self.n
+            self.avg2 = self.sum2 / self.n
+            self.var = self.avg2 - (self.avg ** 2)
+            self.val = self.avg * (self.b-self.a)
+
+        else:
+            for _ in range(n): #points
+                coords = []
+                for d in range(self.dim):
+                    x = random.uniform(self.a[d], self.b[d])
+                    coords.append(x)
+                    #print(x)
+                
+                newtuple = tuple(coords)
+                fname = f.__name__
+                fstring = '{}{}'.format(fname, newtuple)
+                fval = eval(fstring)
+                
+                self.sum += fval
+                self.sum2 += fval**2
+
+
+            
+            self.avg = self.sum / self.n
+            self.avg2 = self.sum2 / self.n
+            self.var = self.avg2 - (self.avg ** 2)
+            diffs = [self.b[i] - self.a[i] for i in range(self.dim)]
+            #print(diffs)
+            self.val = self.avg
+            for delta in diffs:
+                self.val *= delta
 
     def Bisect(self):
-        midpoint = (self.a + self.b) / 2
-        A = Bin(self.a, midpoint, self.n, self.f)
-        B = Bin(midpoint, self.b, self.n, self.f)
-        A.MC()
-        B.MC()
-        return A,B
+        if self.islist == False:
+            midpoint = (self.a + self.b) / 2
+            A = Bin(self.a, midpoint, self.n, self.f)
+            B = Bin(midpoint, self.b, self.n, self.f)
+            A.MC()
+            B.MC()
+            return A,B
+        
+        else:
+            midpoint = [(self.a[i] + self.b[i]) / 2  for i in range(self.dim)]
+        
+            Vb = [0 for i in range(self.dim)]
+            REC = Integrator().rec(2, self.dim, Vb)
+            newbins = []
+            
+            amb = [self.a, midpoint, self.b]
 
+            try:
+                while True:
+                    Vnow = next(REC)
+                    start = [amb[Vnow[d]][d] for d in range(self.dim)]
+                    fin = [amb[Vnow[d] + 1][d] for d in range(self.dim)]
+                    newbin = Bin(start, fin, self.n, self.f)
+                    newbin.MC()
+                    newbins.append(newbin)
+            except:
+                pass
+
+            return newbins
+
+
+'''
 class binN:
     def __init__(self, a, b, n = 0, f = None):
         self.a = a
@@ -149,7 +206,7 @@ class binN:
             pass
 
         return newbins
-
+'''
 
 class Integrator:
     '''
@@ -517,7 +574,9 @@ class Integrator:
 
         return wlist
 
+    """
     def AdaptInt1(self, a, b, tau, intmeth, Q0 = 10000):
+        '''
         '''
         Integrate using the Adaptive Integration Method, using the Newton-Cotes Rule. 
         Uses the Big division - Small division to determine the error
@@ -535,6 +594,7 @@ class Integrator:
         Q0 : float
             Variable used for recursion, compares current value with value from previous iteration
         '''
+        '''
         N = 1
         if intmeth == 2:
             N = 2
@@ -549,8 +609,9 @@ class Integrator:
             val = self.AdaptInt1(a, m, tau, intmeth, Q1) + self.AdaptInt1(m, b, tau, intmeth, Q1)
         
         return val
-      
-    def AdaptInt2(self, a, b, tau, intmeth):
+
+    """
+    def AdaptInt(self, a, b, tau, intmeth):
         '''
         Integrate using the Adaptive Integration Method, using the Newton-Cotes Rule. 
         Uses the the difference between two divisions of the same level to calculate error
@@ -582,15 +643,15 @@ class Integrator:
         err = val - (val1 + val2)
         if abs(err) > tau:
             if err > 0:
-                val = self.AdaptInt2(a, m, tau, intmeth)
-                val += self.AdaptInt2(m, b, tau, intmeth)
+                val = self.AdaptInt(a, m, tau, intmeth)
+                val += self.AdaptInt(m, b, tau, intmeth)
             else:
-                val = self.AdaptInt2(m, b, tau, intmeth)
-                val += self.AdaptInt2(a, m, tau, intmeth)
+                val = self.AdaptInt(m, b, tau, intmeth)
+                val += self.AdaptInt(a, m, tau, intmeth)
         return val
-        
+    
     def MonteCarlo(self, a, b, n = 1000):
-        """
+        '''
         Method that performs the Monte Carlo Integration
     
         Attributes
@@ -601,7 +662,7 @@ class Integrator:
             upper limit of function
         n : int
             Number of random points used
-        """
+        '''
 
         import random
         random.seed(1) #used for reproducibility
@@ -616,8 +677,6 @@ class Integrator:
         return favg * (a-b)
 
     #Test me
-
-
     def rec(self, N, d, V, x = 0):
         '''
         Generator Function used for getting the multidimensional weight indexer.
@@ -642,7 +701,6 @@ class Integrator:
                 V[x] = i
                 yield V
 
-   
     def NCIntN(self, A, B, N, kind):
         """
         Method that performs the Newton-Cotes Integration in multiple dimensions
@@ -851,7 +909,7 @@ class Integrator:
                 Acoord.append(X[o][Vnow[o]])
                 Bcoord.append(X[o][Vnow[o] + 1])
 
-            thebin = binN(Acoord, Bcoord, Nintcheck, self.f) 
+            thebin = Bin(Acoord, Bcoord, Nintcheck, self.f) 
             thebin.MC()
             BinList.append(thebin)
             Aval.append(thebin.val)
@@ -876,8 +934,7 @@ class Integrator:
 
         return finalval
 
-
-    def AdaptInt2N(self, A, B, tau, intmeth):
+    def AdaptIntN(self, A, B, tau, intmeth):
         
         dim= len(A)
         N = 1
@@ -915,44 +972,44 @@ class Integrator:
         if abs(err) > tau:
             val = 0
             for i in range(len(newvals)):
-                val += self.AdaptInt2N(startlist[i], finlist[i], tau, intmeth)
+                val += self.AdaptIntN(startlist[i], finlist[i], tau, intmeth)
 
         return val
 
 
 
 
-def f1(x):
-    return x**1
-
-def f2(x):
-    return x**2
-
-def f3(x):
-    return x**3 
-
-def f4(x):
-    return x**4
-
-def f5(x):
-    return x**5
-
-def functiontester(xmin, xmax, VAL):
-    flist = [f1, f2, f3, f4, f5]
-    for func in flist:
-        intme = Integrator(func)
-        for i in range(3):
-            ind = flist.index(func)
-            Rval = VAL[ind]
-            intme.plotmeval(xmin, xmax, i, realvalue = Rval )
-
 if __name__ == '__main__':
+    def f1(x):
+        return x**1
+
+    def f2(x):
+        return x**2
+
+    def f3(x):
+        return x**3 
+
+    def f4(x):
+        return x**4
+
+    def f5(x):
+        return x**5
+
+    def functiontester(xmin, xmax, VAL):
+        flist = [f1, f2, f3, f4, f5]
+        for func in flist:
+            intme = Integrator(func)
+            for i in range(3):
+                ind = flist.index(func)
+                Rval = VAL[ind]
+                intme.plotmeval(xmin, xmax, i, realvalue = Rval )
+
 
     a = 0 
     b = 10
     VAL = [50, 1000/3, 2500, 20000, 500000/3]
 
-    #functiontester(a, b, VAL)
+    functiontester(a, b, VAL)
 
     
     
@@ -963,15 +1020,15 @@ if __name__ == '__main__':
 
     print('small - small')
     start_time = time.time()
-    print(intme.AdaptInt2(0, 10, 1e-5, 2))
+    print(intme.AdaptInt(0, 10, 1e-5, 2))
     print(time.time()-start_time)
     print('calls', intme.j)
     print('')
     print('large - small')
-    start_time = time.time()
-    print('value', intme.AdaptInt1(0, 10, 1e-2, 2))
-    print('time taken', time.time()-start_time)
-    print('calls', intme.i)
+    #start_time = time.time()
+    #print('value', intme.AdaptInt(0, 10, 1e-2, 2))
+    #print('time taken', time.time()-start_time)
+    #print('calls', intme.i)
 
 
 
