@@ -69,8 +69,8 @@ class Bin:
                     #print(x)
                 
                 newtuple = tuple(coords)
-                fname = f.__name__
-                fstring = '{}{}'.format(fname, newtuple)
+                #fname = f.__name__
+                fstring = 'self.f{}'.format(newtuple)
                 fval = eval(fstring)
                 
                 self.sum += fval
@@ -574,43 +574,7 @@ class Integrator:
 
         return wlist
 
-    """
-    def AdaptInt1(self, a, b, tau, intmeth, Q0 = 10000):
-        '''
-        '''
-        Integrate using the Adaptive Integration Method, using the Newton-Cotes Rule. 
-        Uses the Big division - Small division to determine the error
 
-        Attributes
-        ----------
-        a : float 
-            lower limit of function
-        b : float
-            upper limit of function
-        tau : float
-            Error Tolerance
-        intmeth : int
-            Integration method of choice, from NCInt
-        Q0 : float
-            Variable used for recursion, compares current value with value from previous iteration
-        '''
-        '''
-        N = 1
-        if intmeth == 2:
-            N = 2
-        self.i += 1
-
-        val = self.NCInt( a, b, N, intmeth) 
-        Q1 = +val
-        err = abs(val - Q0)
-
-        if err > tau:
-            m = (a+b)/2
-            val = self.AdaptInt1(a, m, tau, intmeth, Q1) + self.AdaptInt1(m, b, tau, intmeth, Q1)
-        
-        return val
-
-    """
     def AdaptInt(self, a, b, tau, intmeth):
         '''
         Integrate using the Adaptive Integration Method, using the Newton-Cotes Rule. 
@@ -676,6 +640,23 @@ class Integrator:
         favg = fvalue/n
         return favg * (b-a)
 
+    def MonteCarloN(self, A, B, n = 1000):
+        '''
+        Method that performs the Monte Carlo Integration in N dimensions
+    
+        Attributes
+        ----------
+        a : float 
+            lower limit of function
+        b : float
+            upper limit of function
+        n : int
+            Number of random points used
+        '''
+        MCN = Bin(A, B, n, f = self.f)
+        MCN.MC()
+        return MCN.val
+
     #Test me
     def rec(self, N, d, V, x = 0):
         '''
@@ -737,10 +718,11 @@ class Integrator:
                 thevalue *= Wlist[o][V[o]]
                 coords.append(X[o][V[o]])
             newtuple = tuple(coords)
-            fname = f.__name__
-            fstring = '{}{}'.format(fname, newtuple)
-            fval = eval(fstring)
-            return [thevalue, fval]
+            #fname = f.__name__
+            fstring = 'self.f{}'.format(newtuple)
+            #fval = eval(fstring)
+            #return [thevalue, fval]
+            return [thevalue, fstring]
 
         '''
         #Variables
@@ -780,7 +762,7 @@ class Integrator:
         for _ in range(dmul):
             Vnow = next(gen)        
             valnow = wfval(Vnow, Wlist, f, X)
-            value += valnow[0]*valnow[1]
+            value += valnow[0]*eval(valnow[1])
             
         return value
 
@@ -935,41 +917,48 @@ class Integrator:
         return finalval
 
     def AdaptIntN(self, A, B, tau, intmeth):
-        
         dim= len(A)
         N = 1
         if intmeth == 2:
             N = 2
         self.j += 1
 
-        val = self.NCIntN(A, B, N, intmeth) #this needs to be fixed because it needs to take range
-
+        Nproper = [N for i in range(dim)]
+        val = self.NCIntN(A, B, Nproper, intmeth) #this needs to be fixed because it needs to take range
+        #print('val', val)
         #Bisection
-        M = [(A[i] + N[i]) / 2  for i in range(dim)]
+        M = [(A[i] + Nproper[i]) / 2  for i in range(dim)]
+        
         Vb = [0 for i in range(dim)]
         REC = self.rec(2, dim, Vb)
         amb = [A, M, B]
         newvals = []
         startlist = []
         finlist = []
-
+        #print(amb)
         try:
             while True:
                 Vnow = next(REC)
-                start = [amb[Vnow[d]][d] for d in range(self.dim)]
+                #print(Vnow)
+                start = [amb[Vnow[d]][d] for d in range(dim)]
+                #print('start', start)
                 startlist.append(start)
-
-                fin = [amb[Vnow[d] + 1][d] for d in range(self.dim)]
+                fin = [amb[Vnow[d] + 1][d] for d in range(dim)]
                 finlist.append(start)
                 
-                newval = self.NCIntN(start, fin, tau, intmeth)
+                newval = self.AdaptIntN(start, fin, tau, intmeth)
                 newvals.append(newval)
         except:
             pass
 
 
-        err = max(newvals) - min(newvals)
-        if abs(err) > tau:
+        #err = max(newvals) - min(newvals)
+        err = sum(newvals)
+        #print('err', newvals)
+        
+        diff = val - (err)
+        print('diff, tau', diff, tau)
+        if abs(diff) > tau:
             val = 0
             for i in range(len(newvals)):
                 val += self.AdaptIntN(startlist[i], finlist[i], tau, intmeth)
@@ -994,6 +983,9 @@ if __name__ == '__main__':
 
     def f5(x):
         return x**5
+    def g(x, y, z):
+        return x + y + z
+
 
     def functiontester(xmin, xmax, VAL):
         flist = [f1, f2, f3, f4, f5]
@@ -1009,7 +1001,7 @@ if __name__ == '__main__':
     b = 10
     VAL = [50, 1000/3, 2500, 20000, 500000/3]
 
-    functiontester(a, b, VAL)
+    #functiontester(a, b, VAL)
 
     
     
@@ -1024,50 +1016,18 @@ if __name__ == '__main__':
     print(time.time()-start_time)
     print('calls', intme.j)
     print('')
-    print('large - small')
+    #print('large - small')
     #start_time = time.time()
     #print('value', intme.AdaptInt(0, 10, 1e-2, 2))
     #print('time taken', time.time()-start_time)
     #print('calls', intme.i)
 
-
-
-    A = [0, 0]
-    B = [10, 10]
-    N = [10, 20]
-    kind = 1
-    
-    d = len(N)#number of dimensions
-    #Add a check for length of A B and N maybe
-    value = 0
-
-    H = [(B[i]-A[i]) / N[i] for i in range(d)]
-    #h = (b-a) / N
-    Wlist = [intme.w(N[i], kind, H[i]) for i in range(d)]
-    #wlist = self.w(N, kind, h)
-    X = [[A[i] + j*H[i] for j in range(N[i]+1)] for i in range(d)]
-    
-
-    if kind == 0: #deals with the cmidpoint rule
-        for i in range(d):
-            x = X[i]
-            xnew = []
-            for j in range(N[i]):
-                xa = x[j]
-                xb = x[j+1]
-                xnew.append((xb+xa)/2)
-            X[i] = xnew
-            N[i] -= 1
-
-    #need to be able to generalize the N for loops
-    '''
-    for i in range(N1):
-        for j in range(N2):
-            for k in range(N3)
-                have Wlist[0][i]*Wlist[1][j]*Wlist[2][k]*f(xi, xj, xk)
-    '''
-    #for i in range(3):
-        #intme.plotmeval(i, realvalue = 20000, Nmax = 25000, Ndiffs = 100)
-    #    intme.plotmeval(i, realvalue = 20000)
-    #intme.plotme(Nmax = 500, realvalue = 1000/3)
-    
+    A = [0, 0, 0]
+    B = [10, 10, 10]
+    N = [100, 100, 100]
+    kind = 2
+    testme = Integrator(g)
+    #NCINT = testme.NCIntN(A, B, N, 2)
+    #print(NCINT)
+    ADAPTN = testme.AdaptIntN(A, B, 100, 2)
+    print(ADAPTN)
