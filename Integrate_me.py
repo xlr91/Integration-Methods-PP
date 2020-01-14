@@ -225,7 +225,7 @@ class Integrator:
         Initializer of the function. f is the function meant to be integrated. 
         '''
         self.f = f
-        self.i = 0
+        #self.i = 0
         self.j = 0
     
     def __repr__(self):
@@ -573,7 +573,6 @@ class Integrator:
             wlist.append(1 * h/3)
 
         return wlist
-
 
     def AdaptInt(self, a, b, tau, intmeth):
         '''
@@ -1016,6 +1015,7 @@ if __name__ == '__main__':
     print(time.time()-start_time)
     print('calls', intme.j)
     print('')
+    print(intme.NCIntN([0], [10], [1000], 2))
     #print('large - small')
     #start_time = time.time()
     #print('value', intme.AdaptInt(0, 10, 1e-2, 2))
@@ -1029,5 +1029,6 @@ if __name__ == '__main__':
     testme = Integrator(g)
     #NCINT = testme.NCIntN(A, B, N, 2)
     #print(NCINT)
-    ADAPTN = testme.AdaptIntN(A, B, 100, 2)
-    print(ADAPTN)
+    
+    #ADAPTN = testme.AdaptIntN(A, B, 100, 2)
+    #print(ADAPTN)
