@@ -8,7 +8,6 @@ class Bin:
         self.b = b
         self.sum = 0
         self.sum2 = 0
-
         self.islist = False
 
         if type(self.a) == list:
@@ -118,96 +117,6 @@ class Bin:
 
             return newbins
 
-
-'''
-class binN:
-    def __init__(self, a, b, n = 0, f = None):
-        self.a = a
-        self.b = b
-        self.sum = 0
-        self.sum2 = 0
-        self.n = n
-        self.dim = len(a)
-        self.xval = []
-
-        self.avg = 0 
-        self.avg2 = 0
-        self.var = 0
-        self.f = f
-    
-    def __repr__(self):
-        newtuple = tuple([self.a, self.b, self.n, self.f])
-        classname = self.__class__.__name__
-        return '{}{}'.format(classname, newtuple)
-    
-    def MC(self, f = None, n = None):
-        import random
-        random.seed(1)
-
-        if n == None:
-            n = self.n
-        else:
-            self.n = n
-
-        if f == None:
-            f = self.f
-        else:
-            self.f = f
-
-        self.sum = 0
-        self.sum2 = 0
-        self.xval = []
-
-        for _ in range(n): #points
-            coords = []
-            for d in range(self.dim):
-                x = random.uniform(self.a[d], self.b[d])
-                coords.append(x)
-                #print(x)
-            
-            newtuple = tuple(coords)
-            fname = f.__name__
-            fstring = '{}{}'.format(fname, newtuple)
-            fval = eval(fstring)
-            
-
-            self.sum += fval
-            self.sum2 += fval**2
-
-
-        
-        self.avg = self.sum / self.n
-        self.avg2 = self.sum2 / self.n
-        self.var = self.avg2 - (self.avg ** 2)
-        diffs = [self.b[i] - self.a[i] for i in range(self.dim)]
-        #print(diffs)
-        self.val = self.avg
-        for delta in diffs:
-            self.val *= delta
-
-    def Bisect(self):
-        midpoint = [(self.a[i] + self.b[i]) / 2  for i in range(self.dim)]
-    
-        Vb = [0 for i in range(self.dim)]
-        REC = Integrator().rec(2, self.dim, Vb)
-        newbins = []
-        
-        amb = [self.a, midpoint, self.b]
-
-        try:
-            while True:
-                Vnow = next(REC)
-                start = [amb[Vnow[d]][d] for d in range(self.dim)]
-                fin = [amb[Vnow[d] + 1][d] for d in range(self.dim)]
-                newbin = binN(start, fin, self.n, self.f)
-                newbin.MC()
-                newbins.append(newbin)
-        except:
-            pass
-
-        return newbins
-'''
-
 class Integrator:
     '''
     A class used to numerically integrate one or multi-dimensional functions using numerical methods
@@ -218,7 +127,7 @@ class Integrator:
     f : function 
         The function meant to be integrated
     i,j : int
-        A diagnostic attribute. i and j represents the number of calls AdaptInt1 and AdaptInt2 does, respectively.
+        A diagnostic attribute. i and j represents the number of calls Stratsamp and AdaptInt does, respectively.
     '''
     def __init__(self, f = None):
         '''
@@ -402,6 +311,7 @@ class Integrator:
 
         return [nPoints, intvalue, time_taken]
 
+    """
     def plotme(self, a, b, intmethod, Nmax = 500, Ndiffs = 10, realvalue = None):
         '''
         Performs time, convergence, and accuracy test as a function of intervals used
@@ -498,6 +408,7 @@ class Integrator:
         fig.align_labels()
         plt.show()
 
+    """
     def NCInt(self, a, b, N, kind):
         '''
         Integrates a one dimensional function using the Newton-Cotes Rule. 
@@ -606,11 +517,11 @@ class Integrator:
         err = val - (val1 + val2)
         if abs(err) > tau:
             if err > 0:
-                val = self.AdaptInt(a, m, tau, intmeth)
-                val += self.AdaptInt(m, b, tau, intmeth)
+                val = self.AdaptInt(a, m, tau/2, intmeth)
+                val += self.AdaptInt(m, b, tau/2, intmeth)
             else:
-                val = self.AdaptInt(m, b, tau, intmeth)
-                val += self.AdaptInt(a, m, tau, intmeth)
+                val = self.AdaptInt(m, b, tau/2, intmeth)
+                val += self.AdaptInt(a, m, tau/2, intmeth)
         return val
     
     def MonteCarlo(self, a, b, n = 1000):
@@ -659,10 +570,10 @@ class Integrator:
     #Test me
     def rec(self, N, d, V, x = 0):
         '''
-        Generator Function used for getting the multidimensional weight indexer.
+        Generator Function used for getting the multidimensional indexer.
         
-        N = number of points in each dimension as a list
-        d = number of dimensions (len(A))
+        N = number of points in each dimension as a list (eg. x has 3 points, y has 4 points, and so on)
+        d = number of dimensions (len(A), eg. (x, y) has 2 dimensions))
         V = list of indexes at for this iteration
         '''
 
@@ -765,7 +676,7 @@ class Integrator:
             
         return value
 
-    def StratSamp(self, a, b, Nbin, Ninbin, Nintcheck = 10, MaxVar = 10):
+    def StratSamp(self, a, b, Nbin = 4, Ninbin = 1000, Nintcheck = 10, MaxVar = 10):
         """
         Method that performs one-dimensional Stratified Sampling MC.
         
@@ -789,20 +700,11 @@ class Integrator:
 
         import random
         random.seed(1) #used for reproducibility
-        '''
-        #variables
-        a = 0
-        b = 10
-        N = 10 #number of bins
-        Nintcheck = 10 #used to estimate bin size
-        Nint = 1000 #number of points per bin was 100000
-        MaxVar = 10
-        '''
 
         h = (b-a) / N
         x = [a + i*h for i in range(N+1)]
 
-        Aval = []
+        Aval = [] #used for diagnostic purposes
         Avar = []
         BinList = []
 
@@ -829,9 +731,10 @@ class Integrator:
             i.MC(n = Nint)
             finalval += i.val
 
+        self.i = len(BinList)
         return finalval
 
-    def StratSampN(self, a, b, Nbin, Ninbin, Nintcheck = 10, MaxVar = 10):
+    def StratSampN(self, a, b, Nbin = 4, Ninbin = 1000, Nintcheck = 10, MaxVar = 10):
         """
         Method that performs multi-dimensional Stratified Sampling MC.
         
@@ -926,7 +829,7 @@ class Integrator:
         val = self.NCIntN(A, B, Nproper, intmeth) #this needs to be fixed because it needs to take range
         #print('val', val)
         #Bisection
-        M = [(A[i] + Nproper[i]) / 2  for i in range(dim)]
+        M = [(A[i] + B[i]) / 2  for i in range(dim)]
         
         Vb = [0 for i in range(dim)]
         REC = self.rec(2, dim, Vb)
@@ -934,34 +837,39 @@ class Integrator:
         newvals = []
         startlist = []
         finlist = []
-        #print(amb)
+    
+
         try:
             while True:
                 Vnow = next(REC)
-                #print(Vnow)
                 start = [amb[Vnow[d]][d] for d in range(dim)]
-                #print('start', start)
                 startlist.append(start)
+
                 fin = [amb[Vnow[d] + 1][d] for d in range(dim)]
-                finlist.append(start)
-                
-                newval = self.AdaptIntN(start, fin, tau, intmeth)
+                finlist.append(fin)
+                newval = self.NCIntN(start, fin, Nproper, intmeth)
                 newvals.append(newval)
         except:
             pass
-
-
-        #err = max(newvals) - min(newvals)
-        err = sum(newvals)
-        #print('err', newvals)
         
-        diff = val - (err)
-        print('diff, tau', diff, tau)
+
+
+        
+        #err = max(newvals) - min(newvals)
+        sums = sum(newvals)
+        
+        diff = val - (sums)
+        #print('val, sums', val, sums)
+
+        #print('diff, tau', diff, tau)
+        
         if abs(diff) > tau:
             val = 0
             for i in range(len(newvals)):
                 val += self.AdaptIntN(startlist[i], finlist[i], tau, intmeth)
-
+            #print('val', val)
+        
+        #val = 0 
         return val
 
 
@@ -983,7 +891,7 @@ if __name__ == '__main__':
     def f5(x):
         return x**5
     def g(x, y, z):
-        return x + y + z
+        return x + y + 2*z
 
 
     def functiontester(xmin, xmax, VAL):
@@ -1009,13 +917,15 @@ if __name__ == '__main__':
     ltest2 = intme.w(10, 2, 1)
     import time
 
+    '''
     print('small - small')
     start_time = time.time()
-    print(intme.AdaptInt(0, 10, 1e-5, 2))
+    print(intme.AdaptInt(0, 10, 1e-21, 2))
     print(time.time()-start_time)
     print('calls', intme.j)
     print('')
     print(intme.NCIntN([0], [10], [1000], 2))
+    '''
     #print('large - small')
     #start_time = time.time()
     #print('value', intme.AdaptInt(0, 10, 1e-2, 2))
@@ -1030,5 +940,5 @@ if __name__ == '__main__':
     #NCINT = testme.NCIntN(A, B, N, 2)
     #print(NCINT)
     
-    #ADAPTN = testme.AdaptIntN(A, B, 100, 2)
-    #print(ADAPTN)
+    ADAPTN = testme.AdaptIntN(A, B, 0.1, 2)
+    print(ADAPTN)
