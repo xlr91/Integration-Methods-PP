@@ -136,6 +136,7 @@ class Integrator:
         self.f = f
         #self.i = 0
         self.j = 0
+        self.vaar = 0
     
     def __repr__(self):
         '''
@@ -274,6 +275,7 @@ class Integrator:
             value += R * weight[i] * f(x[i])
         return value
 
+    
     def retanalysis(self, a, b, Nmax, Ndiffs, intmethod):
         '''
         Performs time, convergence, and accuracy test as a function of intervals used
@@ -310,7 +312,6 @@ class Integrator:
             time_taken.append(timepast)
 
         return [nPoints, intvalue, time_taken]
-
     """
     def plotme(self, a, b, intmethod, Nmax = 500, Ndiffs = 10, realvalue = None):
         '''
@@ -563,8 +564,10 @@ class Integrator:
         n : int
             Number of random points used
         '''
+        self.vaar = 0
         MCN = Bin(A, B, n, f = self.f)
         MCN.MC()
+        self.vaar = MCN.var
         return MCN.val
 
     #Test me
@@ -578,7 +581,7 @@ class Integrator:
         '''
 
         if type(N) != list:
-            Nnew = [N for i in range(len(A))]
+            Nnew = [N for i in range(d)]
             N = Nnew
 
         if x != d-1:
@@ -647,9 +650,11 @@ class Integrator:
         f = self.f
         value = 0
 
+        '''
         dmul = 1
         for i in range(d):
             dmul *= N[i]
+        '''
 
         H = [(B[i]-A[i]) / N[i] for i in range(d)]
         Wlist = [self.w(N[i], kind, H[i]) for i in range(d)]
@@ -669,14 +674,17 @@ class Integrator:
 
         gen = self.rec(N, d, V)
 
-        for _ in range(dmul):
-            Vnow = next(gen)        
-            valnow = wfval(Vnow, Wlist, f, X)
-            value += valnow[0]*eval(valnow[1])
+        try:
+            while True:
+                Vnow = next(gen)        
+                valnow = wfval(Vnow, Wlist, f, X)
+                value += valnow[0]*eval(valnow[1])
+        except:
+            pass
             
         return value
 
-    def StratSamp(self, a, b, Nbin = 4, Ninbin = 1000, Nintcheck = 10, MaxVar = 10):
+    def StratSamp(self, a, b, Nbin = 4, Ninbin = 1000, Nintcheck = 10, MaxVar = 10, MaxIter = None):
         """
         Method that performs one-dimensional Stratified Sampling MC.
         
@@ -694,9 +702,12 @@ class Integrator:
             Number of points used to perform MC used to estimate the variance in the bin
         MaxVar : float
             Maximum variance in each bin. If the bin's variance exceeds this, bin will be subdivided
+        MaxIter : int
+            Maximum divisions for the algorithm
         """ 
         N = Nbin
         Nint = Ninbin
+        self.stratcalls = 0
 
         import random
         random.seed(1) #used for reproducibility
@@ -726,15 +737,22 @@ class Integrator:
             BinList.insert(maxind + 1, newbins[1])
             Avar.insert(maxind + 1, newbins[1].var)
 
+            self.stratcalls += 1
+            try:
+                if self.stratcalls >= MaxIter:
+                    break
+            except:
+                pass
+
+
         finalval = 0
         for i in BinList:
             i.MC(n = Nint)
             finalval += i.val
 
-        self.i = len(BinList)
         return finalval
 
-    def StratSampN(self, a, b, Nbin = 4, Ninbin = 1000, Nintcheck = 10, MaxVar = 10):
+    def StratSampN(self, A, B, Nbin = 4, Ninbin = 1000, Nintcheck = 10, MaxVar = 1e-2, MaxIter = None):
         """
         Method that performs multi-dimensional Stratified Sampling MC.
         
@@ -766,6 +784,7 @@ class Integrator:
         MaxVar = 10
         '''
 
+        self.stratcalls = 0
 
         d = len(A)
         V = [0 for i in range(d)]
@@ -810,6 +829,15 @@ class Integrator:
             
             BinList += newbins
             Avar += newvars
+            self.stratcalls += 1
+            
+            try:
+                if self.stratcalls >= MaxIter:
+        
+                    break
+            except:
+                pass
+
 
         finalval = 0
         for i in BinList:
@@ -818,12 +846,11 @@ class Integrator:
 
         return finalval
 
-    def AdaptIntN(self, A, B, tau, intmeth):
+    def AdaptIntN(self, A, B, tau, intmeth, N = 2):
         dim= len(A)
-        N = 1
-        if intmeth == 2:
-            N = 2
         self.j += 1
+
+    
 
         Nproper = [N for i in range(dim)]
         val = self.NCIntN(A, B, Nproper, intmeth) #this needs to be fixed because it needs to take range
@@ -867,7 +894,8 @@ class Integrator:
             val = 0
             for i in range(len(newvals)):
                 val += self.AdaptIntN(startlist[i], finlist[i], tau, intmeth)
-            #print('val', val)
+            #finalval = val
+            #print('finalval', finalval)
         
         #val = 0 
         return val
@@ -932,13 +960,25 @@ if __name__ == '__main__':
     #print('time taken', time.time()-start_time)
     #print('calls', intme.i)
 
-    A = [0, 0, 0]
-    B = [10, 10, 10]
+    Atest = [0, 0, 0]
+    Btest = [10, 10, 10]
     N = [100, 100, 100]
     kind = 2
     testme = Integrator(g)
-    #NCINT = testme.NCIntN(A, B, N, 2)
-    #print(NCINT)
+
     
-    ADAPTN = testme.AdaptIntN(A, B, 0.1, 2)
-    print(ADAPTN)
+    #NCINT = testme.NCIntN(Atest, Btest, N, 2)
+    #print('NCINT', NCINT)
+    
+    ADAPTN = testme.AdaptIntN(Atest, Btest, 1, 2)
+    print('ADAPTN', ADAPTN)
+    print('AdaptJ', testme.j)
+    
+
+    #Stratified sampling N
+    #start_time = time.time()
+    #STRATN = testme.StratSampN(Atest, Btest, MaxIter = 100)
+    
+    #print('STRATN', STRATN)
+    #print('stratcalls', testme.stratcalls)
+    #print(time.time()-start_time)
