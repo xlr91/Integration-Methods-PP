@@ -275,7 +275,7 @@ class Integrator:
             value += R * weight[i] * f(x[i])
         return value
 
-    
+    """
     def retanalysis(self, a, b, Nmax, Ndiffs, intmethod):
         '''
         Performs time, convergence, and accuracy test as a function of intervals used
@@ -312,6 +312,8 @@ class Integrator:
             time_taken.append(timepast)
 
         return [nPoints, intvalue, time_taken]
+
+    """
     """
     def plotme(self, a, b, intmethod, Nmax = 500, Ndiffs = 10, realvalue = None):
         '''
@@ -920,8 +922,13 @@ if __name__ == '__main__':
         return x**5
     def g(x, y, z):
         return x + y + 2*z
+        
+    def circ(x, y, z, w ):
+        return x**2 + y**2 + z**2 + w**2
 
 
+
+    '''
     def functiontester(xmin, xmax, VAL):
         flist = [f1, f2, f3, f4, f5]
         for func in flist:
@@ -930,7 +937,7 @@ if __name__ == '__main__':
                 ind = flist.index(func)
                 Rval = VAL[ind]
                 intme.plotmeval(xmin, xmax, i, realvalue = Rval )
-
+    '''
 
     a = 0 
     b = 10
@@ -966,14 +973,22 @@ if __name__ == '__main__':
     kind = 2
     testme = Integrator(g)
 
+    AAA = [-1, -1, -1, -1]
+    BBB = [1, 1, 1, 1]
     
     #NCINT = testme.NCIntN(Atest, Btest, N, 2)
     #print('NCINT', NCINT)
     
-    ADAPTN = testme.AdaptIntN(Atest, Btest, 1, 2)
-    print('ADAPTN', ADAPTN)
-    print('AdaptJ', testme.j)
+    #ADAPTN = testme.AdaptIntN(Atest, Btest, tau = 1, intmeth = 2, N = 5)
+    #print('ADAPTN', ADAPTN)
+    #print('AdaptJ', testme.j)
     
+
+    testcirc = Integrator(circ)
+    TESTCIRC = testcirc.AdaptIntN(AAA, BBB, tau = 5, intmeth = 2, N = 10)
+    print(TESTCIRC)
+    #TESTTRUE = testcirc.StratSampN(AAA, BBB, MaxIter = 3)
+    #print(TESTTRUE)
 
     #Stratified sampling N
     #start_time = time.time()
