@@ -888,14 +888,11 @@ class Integrator:
         sums = sum(newvals)
         
         diff = val - (sums)
-        #print('val, sums', val, sums)
-
-        #print('diff, tau', diff, tau)
         
         if abs(diff) > tau:
             val = 0
             for i in range(len(newvals)):
-                val += self.AdaptIntN(startlist[i], finlist[i], tau, intmeth)
+                val += self.AdaptIntN(startlist[i], finlist[i], tau, intmeth, N)
             #finalval = val
             #print('finalval', finalval)
         
@@ -985,14 +982,14 @@ if __name__ == '__main__':
     
 
     testcirc = Integrator(circ)
-    TESTCIRC = testcirc.AdaptIntN(AAA, BBB, tau = 5, intmeth = 2, N = 10)
+    TESTCIRC = testcirc.AdaptIntN(AAA, BBB, tau = 1e-1, intmeth = 2, N = 6)
     print(TESTCIRC)
     #TESTTRUE = testcirc.StratSampN(AAA, BBB, MaxIter = 3)
     #print(TESTTRUE)
 
     #Stratified sampling N
     #start_time = time.time()
-    #STRATN = testme.StratSampN(Atest, Btest, MaxIter = 100)
+    #STRATN = testme.StratSampN(Atest, Btest, MaxIter = 2)
     
     #print('STRATN', STRATN)
     #print('stratcalls', testme.stratcalls)
