@@ -2,6 +2,9 @@ README
 
 Integrate_Me Contains the project code used for submission
 It also contains all the necessary code to produce the plots found in the project report
+Note that the Integrator-Analysis class is not as clean as the main classes RSSBin and Integrator
+due to more emphasis placed on implementing the Integration methods. The analysis class is mainly used
+to check if the code is working as well as generate the plots required for the report.
 
 The Jupyter Notebook LabBook contains the same necessary code to produce the plots, however 
 it contains the developmental version used to test if everythings working as well
