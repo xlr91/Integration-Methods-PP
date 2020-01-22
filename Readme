@@ -1,4 +1,9 @@
 README
 
-Idk whats up
-Please add a readme later when you feel like it
+Integrate_Me Contains the project code used for submission
+It also contains all the necessary code to produce the plots found in the project report
+
+The Jupyter Notebook LabBook contains the same necessary code to produce the plots, however 
+it contains the developmental version used to test if everythings working as well
+
+Other Files contain some python files used to develop certain functions which are no longer used now.

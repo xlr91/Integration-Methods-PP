@@ -1398,183 +1398,108 @@ if __name__ == '__main__':
         return x**2 + y**2 + z**2 + w**2
     
 
-    F1 = Integrator(f1) #50
-    F2 = Integrator(f2) #1000/3
-    F3 = Integrator(f3) #2500
-    F4 = Integrator(f4) #?
+    F1 = Integrator(f1) 
+    F2 = Integrator(f2) 
+    F3 = Integrator(f3) 
+    F4 = Integrator(f4) 
     F5 = Integrator(f5)
     G = Integrator(Gauss)
     SPh = Integrator(S)
     Circ = Integrator(circ)
-
 
     IA = Integrator_Analysis()
 
     RetAnG = IA.retanalysis(G, -10, 10, 2, Ndiffs = 1, Nmax = 200)
     IA.plotme(RetAnG, realvalue = 1.7724538509)
 
-    print('F3')    
+    print('F3, NC Integration')    
     IA.plotmecombi(F3,0, 10, Nmax = 50, realvalue = 2500, Ndiffs = 2)
 
-    print('F5')
+    print('F5, NC Integration')
     IA.plotmecombi(F5, -2, 6, Nmax = 50, realvalue = 7536, Ndiffs = 2)
 
-    print('Gauss')
+    print('Gaussian, NC Integration')
     IA.plotmecombi(G,-5, 5, Nmax = 50, realvalue = 1.7724538509, Ndiffs = 1)
 
     RetAd1 = IA.retanalysisadapt(F5, -2, 6, -20, 2)
     RetAd2 = IA.retanalysisadapt(G, -10, 10, -24, 2)
 
+    print('Combined Adaptive Integration')
     IA.PLOTME([RetAd1, RetAd2], LABEL = ['F5', 'Gaussian'], REALVALUE = [7536, 1.7724538509], ylim = [-6, 2.5])
 
+
+    print('F5, Adaptive Quadrature')
     IA.plotme(RetAd1, realvalue = 7536, ylim = [-0.2, 2])
 
+    print('Gauss Adaptive')
     IA.plotme(RetAd2, realvalue = 1.7724538509)
 
     RetMC1 = IA.retanalysismonteN(G, -5, 5, Nmax = 5000, Ndiffs = 10)
     RetMC2 = IA.retanalysismonteN(F5, -2, 6, Nmax = 20000)
 
+    print('MC Gaussian')
     IA.plotme(RetMC1, realvalue = 1.7724538509)
 
+    print('MC F5')
     IA.plotme(RetMC2, realvalue = 7536)
 
     RetSt1 = IA.retanalysisstrat(F5, -2, 6)
     RetSt2 = IA.retanalysisstrat(G, -10, 10)
 
+    print('F5 stratified')
     IA.plotme(RetSt1, realvalue = 7536, ylim = [-0.2, 2])
 
+    print('F5 gaussian')
     IA.plotme(RetSt2, realvalue = 1.7724538509, ylim = [-0.2, 2])
 
     IA.PLOTME([RetSt1, RetSt2], LABEL=['test', 'test'], REALVALUE= [7536, 1.7724538509])
 
     RetAnN1 = IA.retanalysisN(SPh,[-1, -1, -1, -1], [1, 1, 1, 1], 2, Ndiffs = 5, Nmax = 40)
 
+    print('Multi Dimensional Integrals Now')
+
+    print('SPh, N dimensional Integration')
     IA.plotme(RetAnN1,realvalue=4.9348022005)
-    IA.plotme(RetAnN1,realvalue=4.9348022005)
+    
 
     RetAnN2 = IA.retanalysisN(Circ, [-1, -1, -1, -1], [1, 1, 1, 1], 2, Nmax = 60, Ndiffs = 10)
+     
+    print('Circ, N dimensional Integration)')
     IA.plotme(RetAnN2, realvalue = 64/3, ylim = [-17.5, -1])
 
+    print('Plotted together, N dimensional Integration')
     IA.PLOTME([RetAnN1, RetAnN2], LABEL=['SPh', 'Circ'], REALVALUE=[4.9348022005, 64/3], ylim = [-16, 2.5])
 
     RetAdtN1 = IA.retanalysisadaptN(SPh,[-1, -1, -1, -1], [1, 1, 1, 1], -4, intmethod = 2)
 
+    print('SPh, Adaptive Quadrature N dimensions ')
     IA.plotme(RetAdtN1, realvalue = 4.9348022005, ylim = [-100, 100])
 
     RetAdtN2 = IA.retanalysisadaptN(Circ,[-1, -1, -1, -1], [1, 1, 1, 1],Taumin10to= -5, intmethod = 2)
 
+    print('Circ, Adaptive Quadrature N dimensions N')
     IA.plotme(RetAdtN2, realvalue = 64/3, ylim = [-100, -29])
 
+    print('Plotted Together, Adaptive Quadrature N dimensions')
     IA.PLOTME([RetAdtN1, RetAdtN2], LABEL = ['SPh', 'Circ'], REALVALUE = [4.9348022005, 64/3], ylim = [-75, -25] )
 
     RetMCN1 = IA.retanalysismonteN(SPh, [-1, -1, -1, -1], [1, 1, 1, 1], Nmax = 5000)
 
-
+    print('SPh, Monte Carlo N dimensions')
     IA.plotme(RetMCN1, realvalue = 4.9348022005)
 
     RetMCN2 = IA.retanalysismonteN(Circ,[-1, -1, -1, -1], [1, 1, 1, 1], Nmax = 10000)
 
+    print('Circ, Monte Carlo in N dimensions')
     IA.plotme(RetMCN2, realvalue = 64/3, ylim = [-6, 7.5])
 
     RetStratN1 = IA.retanalysisstratN(SPh, [-1, -1, -1, -1], [1, 1, 1, 1])
 
+    print('SPh, Stratified Sampling N dimensions')
     IA.plotme(RetStratN1, realvalue=4.9348022005, ylim = [-0.3, 0])
 
+    print('Circ, Stratified Sampling in N dimensions ')
     RetStratN2 = IA.retanalysisstratN(Circ, [-1, -1, -1, -1], [1, 1, 1, 1])
     IA.plotme(RetStratN2, realvalue = 64/3, ylim = [0, 0.25])
     IA.PLOTME([RetStratN1,RetStratN2], REALVALUE = [4.9348022005, 64/3], LABEL = ['SPh', 'Circ'], ylim = [-0.5, 0.5])
 
-
-
-if __name__ != '__main__':
-    def ff1(x):
-        return x**1
-
-    def ff2(x):
-        return x**2
-
-    def ff3(x):
-        return x**3 
-
-    def ff4(x):
-        return x**4
-
-    def ff5(x):
-        return x**5
-    def g(x, y, z):
-        return x + y + 2*z
-        
-    def fcirc(x, y, z, w ):
-        return x**2 + y**2 + z**2 + w**2
-
-
-
-    '''
-    def functiontester(xmin, xmax, VAL):
-        flist = [f1, f2, f3, f4, f5]
-        for func in flist:
-            intme = Integrator(func)
-            for i in range(3):
-                ind = flist.index(func)
-                Rval = VAL[ind]
-                intme.plotmeval(xmin, xmax, i, realvalue = Rval )
-    '''
-
-    a = 0 
-    b = 10
-    VAL = [50, 1000/3, 2500, 20000, 500000/3]
-
-    #functiontester(a, b, VAL)
-
-    
-    
-    intme = Integrator(f4)
-    ltest1 = intme.w(10, 1, 1)
-    ltest2 = intme.w(10, 2, 1)
-    import time
-
-    '''
-    print('small - small')
-    start_time = time.time()
-    print(intme.AdaptInt(0, 10, 1e-21, 2))
-    print(time.time()-start_time)
-    print('calls', intme.j)
-    print('')
-    print(intme.NCIntN([0], [10], [1000], 2))
-    '''
-    #print('large - small')
-    #start_time = time.time()
-    #print('value', intme.AdaptInt(0, 10, 1e-2, 2))
-    #print('time taken', time.time()-start_time)
-    #print('calls', intme.i)
-
-    Atest = [0, 0, 0]
-    Btest = [10, 10, 10]
-    N = [100, 100, 100]
-    kind = 2
-    testme = Integrator(g)
-
-    AAA = [-1, -1, -1, -1]
-    BBB = [1, 1, 1, 1]
-    
-    #NCINT = testme.NCIntN(Atest, Btest, N, 2)
-    #print('NCINT', NCINT)
-    
-    #ADAPTN = testme.AdaptIntN(Atest, Btest, tau = 1, intmeth = 2, N = 5)
-    #print('ADAPTN', ADAPTN)
-    #print('AdaptJ', testme.j)
-    
-
-    testcirc = Integrator(circ)
-    TESTCIRC = testcirc.AdaptIntN(AAA, BBB, tau = 1e-1, intmeth = 2, N = 6)
-    print(TESTCIRC)
-    #TESTTRUE = testcirc.StratSampN(AAA, BBB, MaxIter = 3)
-    #print(TESTTRUE)
-
-    #Stratified sampling N
-    #start_time = time.time()
-    #STRATN = testme.StratSampN(Atest, Btest, MaxIter = 2)
-    
-    #print('STRATN', STRATN)
-    #print('stratcalls', testme.stratcalls)
-    #print(time.time()-start_time)
