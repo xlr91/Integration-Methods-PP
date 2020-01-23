@@ -816,7 +816,6 @@ class Integrator_Analysis:
         ylim : 2 element list
             The limits of the percentage difference graph, in the form [ymin, ymax]
         """
-        %matplotlib inline
         import matplotlib.pyplot as plt 
         import numpy as np
         
@@ -912,7 +911,6 @@ class Integrator_Analysis:
         ylim : 2 element list
             The limits of the percentage difference graph, in the form [ymin, ymax]
         """
-        %matplotlib inline
         import matplotlib.pyplot as plt 
         import numpy as np
         
@@ -1066,7 +1064,6 @@ class Integrator_Analysis:
         realvalue: float
             The real value of the integral. Used to compare the numerical integration with the analytical one.
         """
-        %matplotlib inline
         import matplotlib.pyplot as plt 
 
         RetAn = [self.retanalysis(C, a, b, i, Nmax, Ndiffs) for i in range(3)]
@@ -1406,10 +1403,10 @@ def generateplots():
         return x**2 + y**2 + z**2 + w**2
     
 
-    F1 = Integrator(f1) 
-    F2 = Integrator(f2) 
+    #F1 = Integrator(f1) 
+    #F2 = Integrator(f2) 
     F3 = Integrator(f3) 
-    F4 = Integrator(f4) 
+    #F4 = Integrator(f4) 
     F5 = Integrator(f5)
     G = Integrator(Gauss)
     SPh = Integrator(S)
@@ -1512,4 +1509,7 @@ def generateplots():
     IA.PLOTME([RetStratN1,RetStratN2], REALVALUE = [4.9348022005, 64/3], LABEL = ['SPh', 'Circ'], ylim = [-0.5, 0.5])
 
 if __name__ == '__main__':
+    
+    %matplotlib inline
+    #Uncomment the previous line if required, e.g. if running on a jupyter notebook kernel
     generateplots()

@@ -5,6 +5,9 @@ It also contains all the necessary code to produce the plots found in the projec
 Note that the Integrator-Analysis class is not as clean as the main classes RSSBin and Integrator
 due to more emphasis placed on implementing the Integration methods. The analysis class is mainly used
 to check if the code is working as well as generate the plots required for the report.
+The Python file will automatically generate all required plots when run due to if name = main, although
+sometimes no plot is produced. If this happens, uncomment the %matplotlib inline in the if name = main statement
+at the end of the code
 
 The Jupyter Notebook LabBook contains the same necessary code to produce the plots, however 
 it contains the developmental version used to test if everythings working as well
